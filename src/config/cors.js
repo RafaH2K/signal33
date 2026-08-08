@@ -1,4 +1,5 @@
 import { env } from './env.js';
+import { AppError } from '../utils/AppError.js';
 
 export const corsOptions = {
   origin(origin, callback) {
@@ -6,7 +7,7 @@ export const corsOptions = {
       callback(null, true);
       return;
     }
-    callback(new Error('Not allowed by CORS'));
+    callback(new AppError('No permitido por CORS', 403));
   },
   credentials: true,
 };

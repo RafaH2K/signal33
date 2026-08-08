@@ -38,5 +38,11 @@ export const env = {
     fromEmail: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
   },
 
+  storage: {
+    provider: process.env.STORAGE_PROVIDER || 'local',
+    bucket: process.env.STORAGE_BUCKET,
+    apiKey: process.env.STORAGE_API_KEY,
+  },
+
   logLevel: process.env.LOG_LEVEL || 'info',
 };

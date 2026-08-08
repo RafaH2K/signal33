@@ -22,3 +22,8 @@ export async function findValidByHash(tokenHash) {
 export async function revokeByHash(tokenHash) {
   await query('UPDATE refresh_tokens SET revoked_at = now() WHERE token_hash = $1', [tokenHash]);
 }
+
+export async function deleteExpired() {
+  const result = await query('DELETE FROM refresh_tokens WHERE expires_at < now()');
+  return result.rowCount;
+}

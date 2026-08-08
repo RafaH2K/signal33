@@ -22,3 +22,8 @@ export async function findValidByHash(tokenHash) {
 export async function markUsed(id) {
   await query('UPDATE password_reset_tokens SET used_at = now() WHERE id = $1', [id]);
 }
+
+export async function deleteExpired() {
+  const result = await query('DELETE FROM password_reset_tokens WHERE expires_at < now()');
+  return result.rowCount;
+}
