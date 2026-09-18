@@ -8,6 +8,8 @@ export const createEventSchema = z.object({
   coverImageUrl: z.string().url().optional(),
   ticketUrl: z.string().url().optional(),
   isActive: z.boolean().optional(),
+  reservationsEnabled: z.boolean().optional(),
+  maxAccessesPerPerson: z.coerce.number().int().min(1).max(10).optional(),
 });
 
 export const updateEventSchema = createEventSchema.partial();

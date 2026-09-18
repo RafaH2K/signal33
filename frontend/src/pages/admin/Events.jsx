@@ -4,7 +4,7 @@ import Field from '../../components/Field.jsx';
 import Modal from '../../components/admin/Modal.jsx';
 import ImageUploadField from '../../components/admin/ImageUploadField.jsx';
 
-const EMPTY_FORM = { title: '', description: '', eventDate: '', venue: '', coverImageUrl: '', ticketUrl: '', isActive: true };
+const EMPTY_FORM = { title: '', description: '', eventDate: '', venue: '', coverImageUrl: '', ticketUrl: '', isActive: true, reservationsEnabled: false, maxAccessesPerPerson: 2 };
 
 function toDatetimeLocal(isoString) {
   if (!isoString) return '';
@@ -47,6 +47,8 @@ export default function AdminEvents() {
       coverImageUrl: event.cover_image_url ?? '',
       ticketUrl: event.ticket_url ?? '',
       isActive: event.is_active,
+      reservationsEnabled: event.reservations_enabled,
+      maxAccessesPerPerson: event.max_accesses_per_person,
     });
     setError('');
     setModalOpen(true);
@@ -67,6 +69,8 @@ export default function AdminEvents() {
       coverImageUrl: form.coverImageUrl || undefined,
       ticketUrl: form.ticketUrl || undefined,
       isActive: form.isActive,
+      reservationsEnabled: form.reservationsEnabled,
+      maxAccessesPerPerson: Number(form.maxAccessesPerPerson),
     };
     try {
       if (editingId) await eventsApi.update(editingId, payload);
@@ -168,6 +172,25 @@ export default function AdminEvents() {
             <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
             Activo (visible en el sitio)
           </label>
+          <label className="flex items-center gap-2 text-xs uppercase tracking-wide-caps text-mist">
+            <input
+              type="checkbox"
+              checked={form.reservationsEnabled}
+              onChange={(e) => setForm({ ...form, reservationsEnabled: e.target.checked })}
+            />
+            Permitir apartar boletos (pago en taquilla)
+          </label>
+          {form.reservationsEnabled && (
+            <Field
+              label="Máximo de accesos por persona"
+              type="number"
+              min={1}
+              max={10}
+              value={form.maxAccessesPerPerson}
+              onChange={(e) => setForm({ ...form, maxAccessesPerPerson: e.target.value })}
+              required
+            />
+          )}
           {error && <p className="text-xs text-signal-glow">{error}</p>}
           <button
             type="submit"

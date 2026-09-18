@@ -11,6 +11,7 @@ import UserMenu from './UserMenu.jsx';
 const LINKS = [
   { to: '/', label: 'Home' },
   { to: '/tienda', label: 'Shop' },
+  { to: '/boletos', label: 'Boletos' },
   { to: '/trayectoria', label: 'Trayectoria' },
   { to: '/signal', label: 'Signal' },
 ];

@@ -25,19 +25,40 @@ export async function findById(id, { includeInactive } = {}) {
   return rows[0] || null;
 }
 
-export async function create({ title, description, eventDate, venue, coverImageUrl, ticketUrl, isActive }) {
+export async function create({
+  title,
+  description,
+  eventDate,
+  venue,
+  coverImageUrl,
+  ticketUrl,
+  isActive,
+  reservationsEnabled,
+  maxAccessesPerPerson,
+}) {
   const { rows } = await query(
-    `INSERT INTO events (title, description, event_date, venue, cover_image_url, ticket_url, is_active)
-     VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, true))
+    `INSERT INTO events (title, description, event_date, venue, cover_image_url, ticket_url, is_active,
+                         reservations_enabled, max_accesses_per_person)
+     VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, true), COALESCE($8, false), COALESCE($9, 2))
      RETURNING *`,
-    [title, description ?? null, eventDate, venue, coverImageUrl ?? null, ticketUrl ?? null, isActive]
+    [
+      title,
+      description ?? null,
+      eventDate,
+      venue,
+      coverImageUrl ?? null,
+      ticketUrl ?? null,
+      isActive,
+      reservationsEnabled ?? null,
+      maxAccessesPerPerson ?? null,
+    ]
   );
   return rows[0];
 }
 
 export async function update(
   id,
-  { title, description, eventDate, venue, coverImageUrl, ticketUrl, isActive }
+  { title, description, eventDate, venue, coverImageUrl, ticketUrl, isActive, reservationsEnabled, maxAccessesPerPerson }
 ) {
   const { rows } = await query(
     `UPDATE events SET
@@ -47,8 +68,10 @@ export async function update(
        venue = COALESCE($4, venue),
        cover_image_url = COALESCE($5, cover_image_url),
        ticket_url = COALESCE($6, ticket_url),
-       is_active = COALESCE($7, is_active)
-     WHERE id = $8 AND deleted_at IS NULL
+       is_active = COALESCE($7, is_active),
+       reservations_enabled = COALESCE($8, reservations_enabled),
+       max_accesses_per_person = COALESCE($9, max_accesses_per_person)
+     WHERE id = $10 AND deleted_at IS NULL
      RETURNING *`,
     [
       title ?? null,
@@ -58,6 +81,8 @@ export async function update(
       coverImageUrl ?? null,
       ticketUrl ?? null,
       isActive ?? null,
+      reservationsEnabled ?? null,
+      maxAccessesPerPerson ?? null,
       id,
     ]
   );

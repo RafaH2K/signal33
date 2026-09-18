@@ -32,3 +32,13 @@ export const signalLimiter = rateLimit({
   legacyHeaders: false,
   message: tooManyRequests('Demasiadas solicitudes, probá de nuevo en un momento'),
 });
+
+// apartar es público y manda correos: límite estricto por IP para que nadie
+// use el formulario para spamear bandejas ajenas
+export const reservationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: isProd ? 10 : 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: tooManyRequests('Demasiadas reservas desde esta conexión, probá más tarde'),
+});

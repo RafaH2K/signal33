@@ -1,4 +1,4 @@
-import { apiRequest, setTokens } from './client.js';
+import { API_URL, apiRequest, setTokens } from './client.js';
 
 export const authApi = {
   register: (data) => apiRequest('/auth/register', { method: 'POST', body: data }).then(saveTokens),
@@ -84,4 +84,16 @@ export const dashboardApi = {
     update: (id, data) => apiRequest(`/dashboard/signals/${id}`, { method: 'PATCH', body: data }),
     remove: (id) => apiRequest(`/dashboard/signals/${id}`, { method: 'DELETE' }),
   },
+};
+
+export const reservationsApi = {
+  create: (data) => apiRequest('/reservations/', { method: 'POST', body: data }),
+  track: (trackingCode) => apiRequest(`/reservations/track/${encodeURIComponent(trackingCode)}`),
+  qrUrl: (code) => `${API_URL}/reservations/tickets/${code}/qr.png`,
+  adminList: (params = '') => apiRequest(`/reservations/${params}`),
+  stats: (eventId) => apiRequest(`/reservations/stats/${eventId}`),
+  getTicket: (code) => apiRequest(`/reservations/tickets/${encodeURIComponent(code)}`),
+  checkIn: (code) => apiRequest(`/reservations/tickets/${encodeURIComponent(code)}/check-in`, { method: 'POST' }),
+  setPaid: (id, isPaid) => apiRequest(`/reservations/${id}/payment`, { method: 'PATCH', body: { isPaid } }),
+  cancel: (id) => apiRequest(`/reservations/${id}`, { method: 'DELETE' }),
 };

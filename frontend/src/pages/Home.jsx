@@ -126,9 +126,19 @@ function NovedadesSection({ events, reduce }) {
                   <p className="text-sm">{event.title}</p>
                   <p className="text-xs text-mist-dim">{event.venue}</p>
                 </div>
-                <span className="font-mono text-xs text-mist">
-                  {new Date(event.event_date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                </span>
+                <div className="flex items-center gap-5">
+                  <span className="font-mono text-xs text-mist">
+                    {new Date(event.event_date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </span>
+                  {event.reservations_enabled && (
+                    <Link
+                      to="/boletos"
+                      className="border border-signal px-3 py-1.5 text-xs uppercase tracking-wide-caps text-paper transition hover:bg-signal/20"
+                    >
+                      Apartar
+                    </Link>
+                  )}
+                </div>
               </motion.li>
             ))}
           </ul>
