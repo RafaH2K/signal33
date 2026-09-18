@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api';
+export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api';
 
 export class ApiError extends Error {
   constructor(message, status) {
@@ -66,4 +66,27 @@ export async function apiRequest(path, { method = 'GET', body, isFormData = fals
     throw new ApiError(responseBody?.message ?? 'Error de red', res.status);
   }
   return responseBody?.data;
+}
+
+// Descarga un archivo protegido (el CSV de reservas): un <a href> no puede
+// mandar el Bearer token, así que se baja con fetch y se guarda como blob.
+export async function apiDownload(path, { retry = true } = {}) {
+  const res = await fetch(`${API_URL}${path}`, {
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+  });
+  if (res.status === 401 && retry && refreshToken && (await refreshAccessToken())) {
+    return apiDownload(path, { retry: false });
+  }
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new ApiError(body?.message ?? 'No se pudo descargar', res.status);
+  }
+
+  const filename = res.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] ?? 'descarga';
+  const url = URL.createObjectURL(await res.blob());
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 }

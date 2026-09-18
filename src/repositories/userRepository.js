@@ -49,3 +49,11 @@ export async function findAll({ page, pageSize }) {
 export async function softDelete(id) {
   await query('UPDATE users SET deleted_at = now() WHERE id = $1', [id]);
 }
+
+export async function updateRole(id, role) {
+  const { rows } = await query(
+    'UPDATE users SET role = $2 WHERE id = $1 AND deleted_at IS NULL RETURNING *',
+    [id, role]
+  );
+  return rows[0] || null;
+}

@@ -1,4 +1,4 @@
-import { apiRequest, setTokens } from './client.js';
+import { API_URL, apiDownload, apiRequest, setTokens } from './client.js';
 
 export const authApi = {
   register: (data) => apiRequest('/auth/register', { method: 'POST', body: data }).then(saveTokens),
@@ -19,6 +19,7 @@ export const usersApi = {
   changePassword: (data) => apiRequest('/users/me/password', { method: 'PATCH', body: data }),
   adminList: (params = '') => apiRequest(`/users/${params}`),
   adminRemove: (id) => apiRequest(`/users/${id}`, { method: 'DELETE' }),
+  updateRole: (id, role) => apiRequest(`/users/${id}/role`, { method: 'PATCH', body: { role } }),
 };
 
 export const productsApi = {
@@ -84,4 +85,20 @@ export const dashboardApi = {
     update: (id, data) => apiRequest(`/dashboard/signals/${id}`, { method: 'PATCH', body: data }),
     remove: (id) => apiRequest(`/dashboard/signals/${id}`, { method: 'DELETE' }),
   },
+};
+
+export const reservationsApi = {
+  create: (data) => apiRequest('/reservations/', { method: 'POST', body: data }),
+  availability: (eventId) => apiRequest(`/reservations/availability/${eventId}`),
+  get: (id) => apiRequest(`/reservations/${id}`),
+  resendEmail: (id) => apiRequest(`/reservations/${id}/resend-email`, { method: 'POST' }),
+  exportCsv: (eventId) => apiDownload(`/reservations/export.csv?eventId=${eventId}`),
+  track: (trackingCode) => apiRequest(`/reservations/track/${encodeURIComponent(trackingCode)}`),
+  qrUrl: (code) => `${API_URL}/reservations/tickets/${code}/qr.png`,
+  adminList: (params = '') => apiRequest(`/reservations/${params}`),
+  stats: (eventId) => apiRequest(`/reservations/stats/${eventId}`),
+  getTicket: (code) => apiRequest(`/reservations/tickets/${encodeURIComponent(code)}`),
+  checkIn: (code) => apiRequest(`/reservations/tickets/${encodeURIComponent(code)}/check-in`, { method: 'POST' }),
+  setPaid: (id, isPaid) => apiRequest(`/reservations/${id}/payment`, { method: 'PATCH', body: { isPaid } }),
+  cancel: (id) => apiRequest(`/reservations/${id}`, { method: 'DELETE' }),
 };

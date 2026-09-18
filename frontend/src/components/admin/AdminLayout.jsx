@@ -5,6 +5,7 @@ const SECTIONS = [
   { to: '/admin/productos', label: 'Productos' },
   { to: '/admin/galeria', label: 'Galería' },
   { to: '/admin/eventos', label: 'Eventos' },
+  { to: '/admin/taquilla', label: 'Taquilla' },
   { to: '/admin/trayectoria', label: 'Trayectoria' },
   { to: '/admin/signal', label: 'Signal' },
   { to: '/admin/pedidos', label: 'Pedidos' },

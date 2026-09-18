@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { usersApi } from '../../api/resources.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
+const ROLE_LABEL = { USER: 'Usuario', STAFF: 'Taquilla', ADMIN: 'Admin' };
+
 export default function AdminUsers() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState(null);
@@ -14,6 +16,17 @@ export default function AdminUsers() {
   }
 
   useEffect(load, []);
+
+  async function handleRoleChange(user, role) {
+    const labels = { USER: 'usuario normal', STAFF: 'personal de taquilla', ADMIN: 'administrador' };
+    if (!confirm(`¿Cambiar a "${user.name}" a ${labels[role]}? Tiene que cerrar sesión y volver a entrar para que aplique.`)) return;
+    try {
+      await usersApi.updateRole(user.id, role);
+    } catch (err) {
+      alert(err.message);
+    }
+    load();
+  }
 
   async function handleDelete(user) {
     if (!confirm(`¿Eliminar a "${user.name}"?`)) return;
@@ -44,9 +57,21 @@ export default function AdminUsers() {
                   <td className="py-3 pr-4">{user.name}</td>
                   <td className="py-3 pr-4 text-mist">{user.email}</td>
                   <td className="py-3 pr-4">
-                    <span className={`text-xs uppercase tracking-wide-caps ${user.role === 'ADMIN' ? 'text-signal-glow' : 'text-mist'}`}>
-                      {user.role}
-                    </span>
+                    {user.id === currentUser?.id ? (
+                      <span className="text-xs uppercase tracking-wide-caps text-signal-glow">{ROLE_LABEL[user.role]}</span>
+                    ) : (
+                      <select
+                        value={user.role}
+                        onChange={(e) => handleRoleChange(user, e.target.value)}
+                        className="border border-line-strong bg-ink px-2 py-1 text-xs uppercase tracking-wide-caps text-paper outline-none"
+                      >
+                        {Object.entries(ROLE_LABEL).map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </td>
                   <td className="py-3 pr-4 text-right">
                     {user.id !== currentUser?.id && (

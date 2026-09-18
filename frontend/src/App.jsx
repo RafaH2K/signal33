@@ -11,10 +11,14 @@ import Trayectoria from './pages/Trayectoria.jsx';
 import SignalPage from './pages/Signal.jsx';
 import Orders from './pages/Orders.jsx';
 import Profile from './pages/Profile.jsx';
+import Tickets from './pages/Tickets.jsx';
+import TicketStatus from './pages/TicketStatus.jsx';
+import TicketValidate from './pages/TicketValidate.jsx';
 import Dashboard from './pages/admin/Dashboard.jsx';
 import AdminProducts from './pages/admin/Products.jsx';
 import AdminGallery from './pages/admin/Gallery.jsx';
 import AdminEvents from './pages/admin/Events.jsx';
+import AdminBoxOffice from './pages/admin/BoxOffice.jsx';
 import AdminAbout from './pages/admin/About.jsx';
 import AdminSignals from './pages/admin/Signals.jsx';
 import AdminOrders from './pages/admin/Orders.jsx';
@@ -36,6 +40,20 @@ export default function App() {
         <Route path="/tienda/:id" element={<ProductDetail />} />
         <Route path="/trayectoria" element={<Trayectoria />} />
         <Route path="/signal" element={<SignalPage />} />
+        <Route path="/boletos" element={<Tickets />} />
+        <Route path="/boletos/validar/:code" element={<TicketValidate />} />
+        <Route path="/boletos/:trackingCode" element={<TicketStatus />} />
+        {/* taquilla sin el panel de admin: la usa el personal STAFF desde el celular */}
+        <Route
+          path="/taquilla"
+          element={
+            <ProtectedRoute staffOnly>
+              <main className="mx-auto max-w-3xl px-4 pb-24 pt-24 sm:px-6">
+                <AdminBoxOffice />
+              </main>
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/pedidos"
           element={
@@ -64,6 +82,7 @@ export default function App() {
           <Route path="productos" element={<AdminProducts />} />
           <Route path="galeria" element={<AdminGallery />} />
           <Route path="eventos" element={<AdminEvents />} />
+          <Route path="taquilla" element={<AdminBoxOffice />} />
           <Route path="trayectoria" element={<AdminAbout />} />
           <Route path="signal" element={<AdminSignals />} />
           <Route path="pedidos" element={<AdminOrders />} />

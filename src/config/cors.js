@@ -10,4 +10,6 @@ export const corsOptions = {
     callback(new AppError('No permitido por CORS', 403));
   },
   credentials: true,
+  // el frontend lee el nombre del archivo al descargar el CSV de reservas
+  exposedHeaders: ['Content-Disposition'],
 };

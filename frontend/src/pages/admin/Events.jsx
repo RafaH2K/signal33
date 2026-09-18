@@ -4,7 +4,7 @@ import Field from '../../components/Field.jsx';
 import Modal from '../../components/admin/Modal.jsx';
 import ImageUploadField from '../../components/admin/ImageUploadField.jsx';
 
-const EMPTY_FORM = { title: '', description: '', eventDate: '', venue: '', coverImageUrl: '', ticketUrl: '', isActive: true };
+const EMPTY_FORM = { title: '', description: '', eventDate: '', venue: '', coverImageUrl: '', ticketUrl: '', isActive: true, reservationsEnabled: false, maxAccessesPerPerson: 2, priceGeneral: '', priceOpenBar: '', capacityGeneral: '', capacityOpenBar: '' };
 
 function toDatetimeLocal(isoString) {
   if (!isoString) return '';
@@ -47,6 +47,12 @@ export default function AdminEvents() {
       coverImageUrl: event.cover_image_url ?? '',
       ticketUrl: event.ticket_url ?? '',
       isActive: event.is_active,
+      reservationsEnabled: event.reservations_enabled,
+      maxAccessesPerPerson: event.max_accesses_per_person,
+      priceGeneral: Number(event.price_general) || '',
+      priceOpenBar: Number(event.price_open_bar) || '',
+      capacityGeneral: event.capacity_general ?? '',
+      capacityOpenBar: event.capacity_open_bar ?? '',
     });
     setError('');
     setModalOpen(true);
@@ -67,6 +73,13 @@ export default function AdminEvents() {
       coverImageUrl: form.coverImageUrl || undefined,
       ticketUrl: form.ticketUrl || undefined,
       isActive: form.isActive,
+      reservationsEnabled: form.reservationsEnabled,
+      maxAccessesPerPerson: Number(form.maxAccessesPerPerson),
+      priceGeneral: Number(form.priceGeneral) || 0,
+      priceOpenBar: Number(form.priceOpenBar) || 0,
+      // vacío = sin límite
+      capacityGeneral: form.capacityGeneral === '' ? null : Number(form.capacityGeneral),
+      capacityOpenBar: form.capacityOpenBar === '' ? null : Number(form.capacityOpenBar),
     };
     try {
       if (editingId) await eventsApi.update(editingId, payload);
@@ -168,6 +181,57 @@ export default function AdminEvents() {
             <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
             Activo (visible en el sitio)
           </label>
+          <label className="flex items-center gap-2 text-xs uppercase tracking-wide-caps text-mist">
+            <input
+              type="checkbox"
+              checked={form.reservationsEnabled}
+              onChange={(e) => setForm({ ...form, reservationsEnabled: e.target.checked })}
+            />
+            Permitir apartar boletos (pago en taquilla)
+          </label>
+          {form.reservationsEnabled && (
+            <Field
+              label="Máximo de accesos por persona"
+              type="number"
+              min={1}
+              max={10}
+              value={form.maxAccessesPerPerson}
+              onChange={(e) => setForm({ ...form, maxAccessesPerPerson: e.target.value })}
+              required
+            />
+          )}
+          {form.reservationsEnabled && (
+            <div className="grid grid-cols-2 gap-4">
+              <Field
+                label="Precio general (MXN)"
+                type="number"
+                min={0}
+                value={form.priceGeneral}
+                onChange={(e) => setForm({ ...form, priceGeneral: e.target.value })}
+              />
+              <Field
+                label="Precio barra libre (MXN)"
+                type="number"
+                min={0}
+                value={form.priceOpenBar}
+                onChange={(e) => setForm({ ...form, priceOpenBar: e.target.value })}
+              />
+              <Field
+                label="Cupo general (vacío = sin límite)"
+                type="number"
+                min={0}
+                value={form.capacityGeneral}
+                onChange={(e) => setForm({ ...form, capacityGeneral: e.target.value })}
+              />
+              <Field
+                label="Cupo barra libre (vacío = sin límite)"
+                type="number"
+                min={0}
+                value={form.capacityOpenBar}
+                onChange={(e) => setForm({ ...form, capacityOpenBar: e.target.value })}
+              />
+            </div>
+          )}
           {error && <p className="text-xs text-signal-glow">{error}</p>}
           <button
             type="submit"

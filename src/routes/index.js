@@ -10,6 +10,7 @@ import { eventRoutes } from './eventRoutes.js';
 import { uploadRoutes } from './uploadRoutes.js';
 import { dashboardRoutes } from './dashboardRoutes.js';
 import { signalRoutes } from './signalRoutes.js';
+import { reservationRoutes } from './reservationRoutes.js';
 
 export const routes = Router();
 
@@ -24,3 +25,4 @@ routes.use('/events', eventRoutes);
 routes.use('/uploads', uploadRoutes);
 routes.use('/dashboard', dashboardRoutes);
 routes.use('/signal', signalRoutes);
+routes.use('/reservations', reservationRoutes);
