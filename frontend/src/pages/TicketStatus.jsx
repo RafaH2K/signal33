@@ -1,20 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { reservationsApi } from '../api/resources.js';
-
-export const ACCESS_LABEL = { GENERAL: 'Acceso general', OPEN_BAR: 'Barra libre' };
-
-export function PaidBadge({ isPaid }) {
-  return (
-    <span
-      className={`inline-block border px-3 py-1 text-xs uppercase tracking-wide-caps ${
-        isPaid ? 'border-emerald-500 text-emerald-400' : 'border-amber-500 text-amber-400'
-      }`}
-    >
-      {isPaid ? 'Pagado' : 'No pagado'}
-    </span>
-  );
-}
+import { PaidBadge } from '../components/tickets/Badges.jsx';
+import { ACCESS_LABEL, formatMoney } from '../lib/tickets.js';
 
 export default function TicketStatus() {
   const { trackingCode } = useParams();
@@ -67,6 +55,12 @@ export default function TicketStatus() {
         <dd className="text-right">
           {reservation.quantity} × {ACCESS_LABEL[reservation.access_type]}
         </dd>
+        {Number(reservation.amount_due) > 0 && (
+          <>
+            <dt className="text-xs uppercase tracking-wide-caps text-mist">Total</dt>
+            <dd className="text-right font-mono">{formatMoney(reservation.amount_due)}</dd>
+          </>
+        )}
         <dt className="text-xs uppercase tracking-wide-caps text-mist">Pago</dt>
         <dd className="text-right">
           <PaidBadge isPaid={reservation.is_paid} />
@@ -75,7 +69,7 @@ export default function TicketStatus() {
 
       {!reservation.is_paid && (
         <p className="mb-10 text-center text-sm text-mist">
-          El pago se hace en taquilla. Mostrá estos códigos al llegar.
+          El pago se hace en taquilla. Mostrá estos códigos al llegar (una captura de pantalla sirve).
         </p>
       )}
 

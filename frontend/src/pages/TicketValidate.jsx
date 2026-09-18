@@ -7,11 +7,11 @@ import TicketCheckPanel from '../components/admin/TicketCheckPanel.jsx';
 // asistente, sólo le recordamos que lo presente en taquilla.
 export default function TicketValidate() {
   const { code } = useParams();
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading, isStaff, isAdmin } = useAuth();
 
   if (loading) return <main className="px-6 pb-24 pt-32 text-center text-sm text-mist">Cargando...</main>;
 
-  if (!isAdmin) {
+  if (!isStaff) {
     return (
       <main className="mx-auto max-w-md px-6 pb-24 pt-32 text-center">
         <h1 className="mb-4 font-display text-xl uppercase tracking-wide-caps">Acceso</h1>
@@ -19,7 +19,7 @@ export default function TicketValidate() {
         <p className="mb-8 text-sm text-mist">
           Presentá este código QR en taquilla. Ahí se realiza el pago y se valida tu entrada.
         </p>
-        {!user && <p className="text-xs text-mist-dim">¿Sos del staff? Iniciá sesión con tu cuenta de admin y volvé a escanear.</p>}
+        {!user && <p className="text-xs text-mist-dim">¿Sos del staff? Iniciá sesión con tu cuenta y volvé a escanear.</p>}
         <Link to="/boletos" className="mt-6 inline-block text-xs uppercase tracking-wide-caps text-signal-glow">
           Ir a boletos
         </Link>
@@ -31,7 +31,7 @@ export default function TicketValidate() {
     <main className="mx-auto max-w-md px-6 pb-24 pt-32">
       <h1 className="mb-8 text-center font-display text-xl uppercase tracking-wide-caps">Validar acceso</h1>
       <TicketCheckPanel key={code} code={code.toUpperCase()} />
-      <Link to="/admin/taquilla" className="mt-10 block text-center text-xs uppercase tracking-wide-caps text-mist hover:text-paper">
+      <Link to={isAdmin ? '/admin/taquilla' : '/taquilla'} className="mt-10 block text-center text-xs uppercase tracking-wide-caps text-mist hover:text-paper">
         Abrir escáner de taquilla
       </Link>
     </main>

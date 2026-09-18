@@ -1,43 +1,71 @@
 import { query, withTransaction } from '../database/query.js';
 
 const RESERVATION_WITH_EVENT = `
-  SELECT r.*, e.title AS event_title, e.event_date, e.venue
+  SELECT r.*, (r.unit_price * r.quantity) AS amount_due,
+         e.title AS event_title, e.event_date, e.venue,
+         pb.name AS paid_by_name
   FROM reservations r
   JOIN events e ON e.id = r.event_id
+  LEFT JOIN users pb ON pb.id = r.paid_by
 `;
 
-// La reserva y sus accesos se crean juntos: una reserva sin tickets no sirve
-// para nada y dejaría al cupo contando accesos que nadie puede escanear.
-// El cupo por persona se revisa adentro de la transacción con un lock por
-// (evento, correo): sin él, dos envíos simultáneos verían el mismo conteo y
-// ambos pasarían. Devuelve { alreadyReserved } sin insertar si se excede.
+const CAPACITY_COLUMN = { GENERAL: 'capacity_general', OPEN_BAR: 'capacity_open_bar' };
+
+export async function reservedByAccessType(eventId) {
+  const { rows } = await query(
+    `SELECT access_type, COALESCE(SUM(quantity), 0)::int AS reserved
+     FROM reservations WHERE event_id = $1 AND cancelled_at IS NULL
+     GROUP BY access_type`,
+    [eventId]
+  );
+  return Object.fromEntries(rows.map((row) => [row.access_type, row.reserved]));
+}
+
+// Cupo del evento y cupo por persona se revisan adentro de la transacción,
+// cada uno con su lock: sin ellos, envíos simultáneos verían el mismo conteo y
+// todos pasarían. Los locks se toman siempre en el mismo orden (evento/tipo y
+// luego correo) para que dos transacciones nunca se bloqueen mutuamente.
+// Devuelve { rejected: 'EVENT_FULL' | 'PERSON_LIMIT', ... } sin insertar.
 export async function createWithTickets({
-  eventId,
+  event,
   trackingCode,
   fullName,
   email,
   accessType,
   quantity,
+  unitPrice,
   ticketCodes,
-  maxAccesses,
 }) {
   return withTransaction(async (client) => {
-    await client.query('SELECT pg_advisory_xact_lock(hashtext($1 || lower($2)))', [eventId, email]);
+    const capacity = event[CAPACITY_COLUMN[accessType]];
+    if (capacity !== null && capacity !== undefined) {
+      await client.query('SELECT pg_advisory_xact_lock(hashtext($1 || $2))', [event.id, accessType]);
+      const { rows } = await client.query(
+        `SELECT COALESCE(SUM(quantity), 0)::int AS total FROM reservations
+         WHERE event_id = $1 AND access_type = $2 AND cancelled_at IS NULL`,
+        [event.id, accessType]
+      );
+      const remaining = capacity - rows[0].total;
+      if (quantity > remaining) return { rejected: 'EVENT_FULL', remaining: Math.max(0, remaining) };
+    }
 
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1 || lower($2)))', [event.id, email]);
     const { rows: countRows } = await client.query(
       `SELECT COALESCE(SUM(quantity), 0)::int AS total
        FROM reservations
        WHERE event_id = $1 AND lower(email) = lower($2) AND cancelled_at IS NULL`,
-      [eventId, email]
+      [event.id, email]
     );
     const alreadyReserved = countRows[0].total;
-    if (alreadyReserved + quantity > maxAccesses) return { alreadyReserved };
+    if (alreadyReserved + quantity > event.max_accesses_per_person) {
+      return { rejected: 'PERSON_LIMIT', alreadyReserved };
+    }
 
     const { rows } = await client.query(
-      `INSERT INTO reservations (event_id, tracking_code, full_name, email, access_type, quantity)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [eventId, trackingCode, fullName, email, accessType, quantity]
+      `INSERT INTO reservations (event_id, tracking_code, full_name, email, access_type, quantity, unit_price)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *, (unit_price * quantity) AS amount_due`,
+      [event.id, trackingCode, fullName, email, accessType, quantity, unitPrice]
     );
     const reservation = rows[0];
 
@@ -64,7 +92,9 @@ export async function findById(id) {
 
 export async function findTickets(reservationId) {
   const { rows } = await query(
-    'SELECT * FROM tickets WHERE reservation_id = $1 ORDER BY created_at ASC',
+    `SELECT t.*, u.name AS checked_in_by_name
+     FROM tickets t LEFT JOIN users u ON u.id = t.checked_in_by
+     WHERE t.reservation_id = $1 ORDER BY t.created_at ASC`,
     [reservationId]
   );
   return rows;
@@ -72,11 +102,14 @@ export async function findTickets(reservationId) {
 
 export async function findTicketByCode(code) {
   const { rows } = await query(
-    `SELECT t.*, r.tracking_code, r.full_name, r.email, r.access_type, r.is_paid, r.cancelled_at,
+    `SELECT t.*, u.name AS checked_in_by_name,
+            r.tracking_code, r.full_name, r.email, r.access_type, r.quantity, r.is_paid, r.cancelled_at,
+            (r.unit_price * r.quantity) AS amount_due,
             e.id AS event_id, e.title AS event_title, e.event_date, e.venue
      FROM tickets t
      JOIN reservations r ON r.id = t.reservation_id
      JOIN events e ON e.id = r.event_id
+     LEFT JOIN users u ON u.id = t.checked_in_by
      WHERE t.code = $1`,
     [code]
   );
@@ -87,34 +120,68 @@ export async function findTicketByCode(code) {
 // pueda reusar: si dos lectores escanean el mismo código a la vez, sólo uno
 // actualiza una fila y el otro recibe null.
 export async function checkInTicket(code, userId) {
-  const { rows } = await query(
-    `UPDATE tickets SET checked_in_at = now(), checked_in_by = $2
-     WHERE code = $1 AND checked_in_at IS NULL
-     RETURNING *`,
-    [code, userId]
-  );
-  return rows[0] || null;
+  return withTransaction(async (client) => {
+    const { rows } = await client.query(
+      `UPDATE tickets SET checked_in_at = now(), checked_in_by = $2
+       WHERE code = $1 AND checked_in_at IS NULL
+       RETURNING *`,
+      [code, userId]
+    );
+    const ticket = rows[0];
+    if (ticket) await log(client, ticket.reservation_id, 'CHECK_IN', userId, code);
+    return ticket || null;
+  });
 }
 
-export async function setPaid(id, isPaid) {
-  const { rows } = await query(
-    `UPDATE reservations SET is_paid = $2, paid_at = CASE WHEN $2 THEN now() ELSE NULL END
-     WHERE id = $1 AND cancelled_at IS NULL
-     RETURNING *`,
-    [id, isPaid]
-  );
-  return rows[0] || null;
+export async function setPaid(id, isPaid, userId) {
+  return withTransaction(async (client) => {
+    const { rows } = await client.query(
+      `UPDATE reservations SET
+         is_paid = $2,
+         paid_at = CASE WHEN $2 THEN now() ELSE NULL END,
+         paid_by = CASE WHEN $2 THEN $3::uuid ELSE NULL END
+       WHERE id = $1 AND cancelled_at IS NULL AND is_paid <> $2
+       RETURNING *`,
+      [id, isPaid, userId]
+    );
+    if (rows[0]) await log(client, id, isPaid ? 'PAID' : 'UNPAID', userId);
+    return rows[0] || null;
+  });
 }
 
-export async function cancel(id) {
-  const { rows } = await query(
-    'UPDATE reservations SET cancelled_at = now() WHERE id = $1 AND cancelled_at IS NULL RETURNING *',
-    [id]
-  );
-  return rows[0] || null;
+export async function cancel(id, userId) {
+  return withTransaction(async (client) => {
+    const { rows } = await client.query(
+      'UPDATE reservations SET cancelled_at = now() WHERE id = $1 AND cancelled_at IS NULL RETURNING *',
+      [id]
+    );
+    if (rows[0]) await log(client, id, 'CANCELLED', userId);
+    return rows[0] || null;
+  });
 }
 
-export async function findAll({ eventId, isPaid, search, page, pageSize }) {
+export function logAction(reservationId, action, userId, detail) {
+  return log({ query }, reservationId, action, userId, detail);
+}
+
+function log(client, reservationId, action, userId, detail = null) {
+  return client.query(
+    'INSERT INTO reservation_logs (reservation_id, action, user_id, detail) VALUES ($1, $2, $3, $4)',
+    [reservationId, action, userId, detail]
+  );
+}
+
+export async function findLogs(reservationId) {
+  const { rows } = await query(
+    `SELECT l.action, l.detail, l.created_at, u.name AS user_name
+     FROM reservation_logs l LEFT JOIN users u ON u.id = l.user_id
+     WHERE l.reservation_id = $1 ORDER BY l.created_at ASC`,
+    [reservationId]
+  );
+  return rows;
+}
+
+function buildFilters({ eventId, isPaid, search }) {
   const filters = ['r.cancelled_at IS NULL'];
   const params = [];
 
@@ -132,35 +199,77 @@ export async function findAll({ eventId, isPaid, search, page, pageSize }) {
       `(r.full_name ILIKE $${params.length} OR r.email ILIKE $${params.length} OR r.tracking_code ILIKE $${params.length})`
     );
   }
-  const where = `WHERE ${filters.join(' AND ')}`;
+  return { where: `WHERE ${filters.join(' AND ')}`, params };
+}
 
-  const { rows: countRows } = await query(
-    `SELECT COUNT(*)::int AS total FROM reservations r ${where}`,
-    params
-  );
+export async function findAll({ eventId, isPaid, search, page, pageSize }) {
+  const { where, params } = buildFilters({ eventId, isPaid, search });
+
+  const { rows: countRows } = await query(`SELECT COUNT(*)::int AS total FROM reservations r ${where}`, params);
 
   const offset = (page - 1) * pageSize;
   const { rows } = await query(
-    `${RESERVATION_WITH_EVENT} ${where}
-     ORDER BY r.created_at DESC
-     LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+    `SELECT sub.*,
+            (SELECT COUNT(*)::int FROM tickets t WHERE t.reservation_id = sub.id AND t.checked_in_at IS NOT NULL) AS checked_in
+     FROM (${RESERVATION_WITH_EVENT} ${where}
+           ORDER BY r.created_at DESC
+           LIMIT $${params.length + 1} OFFSET $${params.length + 2}) sub
+     ORDER BY sub.created_at DESC`,
     [...params, pageSize, offset]
   );
 
   return { reservations: rows, total: countRows[0].total };
 }
 
-export async function eventStats(eventId) {
+// lista completa para exportar (respaldo en papel si se cae el internet)
+export async function findAllForExport(eventId) {
   const { rows } = await query(
-    `SELECT
-       COALESCE(SUM(r.quantity), 0)::int AS reserved,
-       COALESCE(SUM(r.quantity) FILTER (WHERE r.is_paid), 0)::int AS paid,
-       (SELECT COUNT(*)::int FROM tickets t
-          JOIN reservations r2 ON r2.id = t.reservation_id
-         WHERE r2.event_id = $1 AND t.checked_in_at IS NOT NULL) AS checked_in
+    `SELECT r.tracking_code, r.full_name, r.email, r.access_type, r.quantity,
+            (r.unit_price * r.quantity) AS amount_due, r.is_paid, r.paid_at, pb.name AS paid_by_name,
+            string_agg(t.code, ' ' ORDER BY t.created_at) AS ticket_codes,
+            COUNT(t.checked_in_at)::int AS checked_in
      FROM reservations r
-     WHERE r.event_id = $1 AND r.cancelled_at IS NULL`,
+     JOIN tickets t ON t.reservation_id = r.id
+     LEFT JOIN users pb ON pb.id = r.paid_by
+     WHERE r.event_id = $1 AND r.cancelled_at IS NULL
+     GROUP BY r.id, pb.name
+     ORDER BY lower(r.full_name)`,
     [eventId]
   );
-  return rows[0];
+  return rows;
+}
+
+export async function eventStats(eventId) {
+  const { rows: byType } = await query(
+    `SELECT r.access_type,
+            COALESCE(SUM(r.quantity), 0)::int AS reserved,
+            COALESCE(SUM(r.quantity) FILTER (WHERE r.is_paid), 0)::int AS paid,
+            COALESCE(SUM(r.unit_price * r.quantity) FILTER (WHERE r.is_paid), 0)::numeric AS collected,
+            COALESCE(SUM(r.unit_price * r.quantity) FILTER (WHERE NOT r.is_paid), 0)::numeric AS pending
+     FROM reservations r
+     WHERE r.event_id = $1 AND r.cancelled_at IS NULL
+     GROUP BY r.access_type`,
+    [eventId]
+  );
+
+  const { rows: checkIns } = await query(
+    `SELECT COUNT(*)::int AS checked_in FROM tickets t
+     JOIN reservations r ON r.id = t.reservation_id
+     WHERE r.event_id = $1 AND r.cancelled_at IS NULL AND t.checked_in_at IS NOT NULL`,
+    [eventId]
+  );
+
+  // corte de caja: cuánto cobró cada persona de taquilla
+  const { rows: byStaff } = await query(
+    `SELECT u.id AS user_id, u.name, COUNT(*)::int AS reservations,
+            SUM(r.quantity)::int AS accesses,
+            SUM(r.unit_price * r.quantity)::numeric AS collected
+     FROM reservations r JOIN users u ON u.id = r.paid_by
+     WHERE r.event_id = $1 AND r.is_paid AND r.cancelled_at IS NULL
+     GROUP BY u.id, u.name
+     ORDER BY collected DESC`,
+    [eventId]
+  );
+
+  return { byType, checkedIn: checkIns[0].checked_in, byStaff };
 }

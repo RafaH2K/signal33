@@ -20,6 +20,10 @@ function escapeHtml(value) {
 
 const ACCESS_LABELS = { GENERAL: 'Acceso general', OPEN_BAR: 'Barra libre' };
 
+export function formatMoney(amount) {
+  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
+}
+
 function formatEventDate(date) {
   return new Intl.DateTimeFormat('es-MX', {
     dateStyle: 'full',
@@ -32,6 +36,8 @@ function formatEventDate(date) {
 // adjuntos: así el correo pesa poco y el mismo enlace sirve si lo reenvían.
 export async function sendReservationEmail({ reservation, tickets }) {
   const trackUrl = `${env.frontendUrl}/boletos/${reservation.tracking_code}`;
+  const amount = Number(reservation.amount_due ?? 0);
+  const amountText = amount > 0 ? `: ${formatMoney(amount)}` : '';
 
   const ticketBlocks = tickets
     .map(
@@ -57,7 +63,7 @@ export async function sendReservationEmail({ reservation, tickets }) {
         <p style="margin:0 0 16px;color:#555">${formatEventDate(reservation.event_date)} · ${escapeHtml(reservation.venue)}</p>
         <p>Hola ${escapeHtml(reservation.full_name)}, tu lugar está apartado.</p>
         <p style="background:#fff4e5;border-left:4px solid #f59e0b;padding:12px 16px;margin:16px 0">
-          <strong>El pago se realiza en taquilla.</strong> No se cobra nada en línea:
+          <strong>El pago se realiza en taquilla${amountText}.</strong> No se cobra nada en línea:
           presentá este correo en la entrada, pagá ahí y tu acceso queda liberado.
         </p>
         ${ticketBlocks}

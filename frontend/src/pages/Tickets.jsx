@@ -2,16 +2,13 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { eventsApi, reservationsApi } from '../api/resources.js';
 import Field from '../components/Field.jsx';
-
-const ACCESS_OPTIONS = [
-  { value: 'GENERAL', label: 'Acceso general' },
-  { value: 'OPEN_BAR', label: 'Barra libre' },
-];
+import { ACCESS_LABEL, formatMoney } from '../lib/tickets.js';
 
 export default function Tickets() {
   const navigate = useNavigate();
   const [events, setEvents] = useState(null);
   const [selected, setSelected] = useState(null);
+  const [availability, setAvailability] = useState(null);
   const [form, setForm] = useState({ fullName: '', email: '', accessType: 'GENERAL', quantity: 1 });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -28,15 +25,45 @@ export default function Tickets() {
       .catch(() => setEvents([]));
   }, []);
 
+  function loadAvailability(eventId) {
+    return reservationsApi
+      .availability(eventId)
+      .then((data) => {
+        setAvailability(data);
+        // si el tipo elegido se agotó, saltamos al primero que tenga lugar
+        const current = data.accessTypes.find((t) => t.type === form.accessType);
+        if (current?.remaining === 0) {
+          const next = data.accessTypes.find((t) => t.remaining !== 0);
+          if (next) setForm((f) => ({ ...f, accessType: next.type }));
+        }
+      })
+      .catch(() => setAvailability(null));
+  }
+
+  useEffect(() => {
+    if (selected) loadAvailability(selected.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]);
+
+  const maxPerPerson = availability?.maxAccessesPerPerson ?? selected?.max_accesses_per_person ?? 2;
+  const chosen = availability?.accessTypes.find((t) => t.type === form.accessType);
+  const maxQuantity = Math.max(1, Math.min(maxPerPerson, chosen?.remaining ?? Infinity));
+  const quantity = Math.min(form.quantity, maxQuantity);
+  const soldOut = availability?.accessTypes.every((t) => t.remaining === 0);
+  const total = (chosen?.price ?? 0) * quantity;
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
     setSubmitting(true);
     try {
-      const reservation = await reservationsApi.create({ ...form, eventId: selected.id });
+      // quantity ya viene recortada al cupo que queda
+      const reservation = await reservationsApi.create({ ...form, quantity, eventId: selected.id });
       navigate(`/boletos/${reservation.tracking_code}`, { state: { justCreated: true } });
     } catch (err) {
       setError(err.message);
+      // otro se llevó los últimos lugares mientras llenaba el formulario
+      if (err.status === 409) loadAvailability(selected.id);
     } finally {
       setSubmitting(false);
     }
@@ -47,8 +74,6 @@ export default function Tickets() {
     const code = trackCode.trim().toUpperCase();
     if (code) navigate(`/boletos/${code}`);
   }
-
-  const maxQuantity = selected?.max_accesses_per_person ?? 2;
 
   return (
     <main className="mx-auto max-w-2xl px-6 pb-24 pt-32">
@@ -73,10 +98,7 @@ export default function Tickets() {
                 <li key={event.id}>
                   <button
                     type="button"
-                    onClick={() => {
-                      setSelected(event);
-                      setForm((f) => ({ ...f, quantity: Math.min(f.quantity, event.max_accesses_per_person) }));
-                    }}
+                    onClick={() => setSelected(event)}
                     className={`flex w-full items-center justify-between gap-4 px-4 py-5 text-left transition ${
                       selected?.id === event.id ? 'bg-white/5 text-paper' : 'text-mist hover:text-paper'
                     }`}
@@ -99,7 +121,11 @@ export default function Tickets() {
             </ul>
           </section>
 
-          {selected && (
+          {selected && soldOut && (
+            <p className="border border-line px-5 py-8 text-center font-display uppercase tracking-wide-caps">Agotado</p>
+          )}
+
+          {selected && availability && !soldOut && (
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               <h2 className="text-xs uppercase tracking-wide-caps text-mist">2 · Tus datos</h2>
               <Field
@@ -121,30 +147,44 @@ export default function Tickets() {
               <fieldset className="flex flex-col gap-2">
                 <legend className="mb-2 text-xs uppercase tracking-wide-caps text-mist">Tipo de acceso</legend>
                 <div className="grid grid-cols-2 gap-3">
-                  {ACCESS_OPTIONS.map((opt) => (
-                    <label
-                      key={opt.value}
-                      className={`cursor-pointer border px-4 py-3 text-center text-sm transition ${
-                        form.accessType === opt.value ? 'border-signal text-paper' : 'border-line-strong text-mist'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="accessType"
-                        value={opt.value}
-                        checked={form.accessType === opt.value}
-                        onChange={() => setForm({ ...form, accessType: opt.value })}
-                        className="sr-only"
-                      />
-                      {opt.label}
-                    </label>
-                  ))}
+                  {availability.accessTypes.map((opt) => {
+                    const disabled = opt.remaining === 0;
+                    return (
+                      <label
+                        key={opt.type}
+                        className={`border px-4 py-3 text-center text-sm transition ${
+                          disabled
+                            ? 'cursor-not-allowed border-line text-mist-dim line-through'
+                            : form.accessType === opt.type
+                              ? 'cursor-pointer border-signal text-paper'
+                              : 'cursor-pointer border-line-strong text-mist'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="accessType"
+                          value={opt.type}
+                          checked={form.accessType === opt.type}
+                          disabled={disabled}
+                          onChange={() => setForm({ ...form, accessType: opt.type })}
+                          className="sr-only"
+                        />
+                        <span className="block">{ACCESS_LABEL[opt.type]}</span>
+                        <span className="block font-mono text-xs">{disabled ? 'Agotado' : formatMoney(opt.price)}</span>
+                        {!disabled && opt.remaining !== null && opt.remaining <= 20 && (
+                          <span className="block text-[10px] uppercase tracking-wide-caps text-amber-400">
+                            Quedan {opt.remaining}
+                          </span>
+                        )}
+                      </label>
+                    );
+                  })}
                 </div>
               </fieldset>
 
               <fieldset className="flex flex-col gap-2">
                 <legend className="mb-2 text-xs uppercase tracking-wide-caps text-mist">
-                  Cantidad (máximo {maxQuantity} por persona)
+                  Cantidad (máximo {maxPerPerson} por persona)
                 </legend>
                 <div className="flex gap-3">
                   {Array.from({ length: maxQuantity }, (_, i) => i + 1).map((n) => (
@@ -153,7 +193,7 @@ export default function Tickets() {
                       type="button"
                       onClick={() => setForm({ ...form, quantity: n })}
                       className={`h-12 w-12 border font-mono text-sm transition ${
-                        form.quantity === n ? 'border-signal text-paper' : 'border-line-strong text-mist'
+                        quantity === n ? 'border-signal text-paper' : 'border-line-strong text-mist'
                       }`}
                     >
                       {n}
@@ -161,6 +201,13 @@ export default function Tickets() {
                   ))}
                 </div>
               </fieldset>
+
+              {total > 0 && (
+                <p className="flex items-baseline justify-between border-y border-line py-4 text-sm">
+                  <span className="text-xs uppercase tracking-wide-caps text-mist">A pagar en taquilla</span>
+                  <span className="font-mono text-lg">{formatMoney(total)}</span>
+                </p>
+              )}
 
               {error && <p className="text-xs text-signal-glow">{error}</p>}
 

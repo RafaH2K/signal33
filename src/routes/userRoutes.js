@@ -13,4 +13,5 @@ userRoutes.patch('/me/password', userController.changeMyPassword);
 
 userRoutes.get('/', authorize('ADMIN'), userController.listUsers);
 userRoutes.get('/:id', authorize('ADMIN'), userController.getUserById);
+userRoutes.patch('/:id/role', authorize('ADMIN'), userController.updateRole);
 userRoutes.delete('/:id', authorize('ADMIN'), userController.deleteUser);

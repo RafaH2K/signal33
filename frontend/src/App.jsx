@@ -43,6 +43,17 @@ export default function App() {
         <Route path="/boletos" element={<Tickets />} />
         <Route path="/boletos/validar/:code" element={<TicketValidate />} />
         <Route path="/boletos/:trackingCode" element={<TicketStatus />} />
+        {/* taquilla sin el panel de admin: la usa el personal STAFF desde el celular */}
+        <Route
+          path="/taquilla"
+          element={
+            <ProtectedRoute staffOnly>
+              <main className="mx-auto max-w-3xl px-4 pb-24 pt-24 sm:px-6">
+                <AdminBoxOffice />
+              </main>
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/pedidos"
           element={

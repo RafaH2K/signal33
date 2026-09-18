@@ -2,6 +2,7 @@ import {
   updateProfileSchema,
   changePasswordSchema,
   listUsersQuerySchema,
+  updateRoleSchema,
 } from '../validators/userValidator.js';
 import * as userService from '../services/userService.js';
 import { ok } from '../utils/response.js';
@@ -58,6 +59,16 @@ export async function deleteUser(req, res, next) {
   try {
     await userService.deleteUser(req.params.id);
     ok(res, null);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateRole(req, res, next) {
+  try {
+    const { role } = updateRoleSchema.parse(req.body);
+    const user = await userService.updateRole(req.params.id, role, req.user.sub);
+    ok(res, user);
   } catch (error) {
     next(error);
   }

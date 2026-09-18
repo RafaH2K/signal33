@@ -6,15 +6,25 @@ import { reservationLimiter } from '../middlewares/rateLimit.js';
 
 export const reservationRoutes = Router();
 
-// públicas: apartar, consultar por código de seguimiento y ver el QR
+const boxOffice = [authenticate, authorize('ADMIN', 'STAFF')];
+const adminOnly = [authenticate, authorize('ADMIN')];
+
+// públicas: apartar, disponibilidad, consultar por código de seguimiento y ver el QR
 reservationRoutes.post('/', reservationLimiter, reservationController.create);
+reservationRoutes.get('/availability/:eventId', reservationController.availability);
 reservationRoutes.get('/track/:trackingCode', reservationController.track);
 reservationRoutes.get('/tickets/:code/qr.png', reservationController.qr);
 
-// taquilla / admin
-reservationRoutes.get('/', authenticate, authorize('ADMIN'), reservationController.list);
-reservationRoutes.get('/stats/:eventId', authenticate, authorize('ADMIN'), reservationController.stats);
-reservationRoutes.get('/tickets/:code', authenticate, authorize('ADMIN'), reservationController.getTicket);
-reservationRoutes.post('/tickets/:code/check-in', authenticate, authorize('ADMIN'), reservationController.checkIn);
-reservationRoutes.patch('/:id/payment', authenticate, authorize('ADMIN'), reservationController.setPayment);
-reservationRoutes.delete('/:id', authenticate, authorize('ADMIN'), reservationController.cancel);
+// taquilla: personal (STAFF) y admin
+reservationRoutes.get('/', ...boxOffice, reservationController.list);
+reservationRoutes.get('/stats/:eventId', ...boxOffice, reservationController.stats);
+reservationRoutes.get('/tickets/:code', ...boxOffice, reservationController.getTicket);
+reservationRoutes.post('/tickets/:code/check-in', ...boxOffice, reservationController.checkIn);
+// antes de '/:id' para que Express no lo tome como un id
+reservationRoutes.get('/export.csv', ...adminOnly, reservationController.exportCsv);
+reservationRoutes.get('/:id', ...boxOffice, reservationController.getOne);
+reservationRoutes.patch('/:id/payment', ...boxOffice, reservationController.setPayment);
+reservationRoutes.post('/:id/resend-email', ...boxOffice, reservationController.resendEmail);
+
+// sólo admin: cancelar (exportar, también sólo admin, está arriba)
+reservationRoutes.delete('/:id', ...adminOnly, reservationController.cancel);

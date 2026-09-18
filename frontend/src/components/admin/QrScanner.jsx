@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import jsQR from 'jsqr';
-
-const TICKET_CODE = /([2-9A-Z]{16})\/?$/;
-
-// El QR contiene la URL pública del boleto; nos quedamos con el código del final.
-export function extractTicketCode(text) {
-  return text.trim().toUpperCase().match(TICKET_CODE)?.[1] ?? null;
-}
+import { extractTicketCode } from '../../lib/tickets.js';
 
 // Lee cuadros de la cámara trasera y los decodifica con jsQR. Se usa jsQR y no
 // la API nativa BarcodeDetector porque ésta no existe en Safari ni en Chrome de

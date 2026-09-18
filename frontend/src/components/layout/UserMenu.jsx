@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useAuth } from '../../context/AuthContext.jsx';
 
 export default function UserMenu() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin, isStaff } = useAuth();
   const [open, setOpen] = useState(false);
   const reduce = useReducedMotion();
 
@@ -33,6 +33,16 @@ export default function UserMenu() {
               exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
+              {isAdmin && (
+                <MenuLink to="/admin" onClick={() => setOpen(false)}>
+                  Panel admin
+                </MenuLink>
+              )}
+              {isStaff && (
+                <MenuLink to="/taquilla" onClick={() => setOpen(false)}>
+                  Taquilla
+                </MenuLink>
+              )}
               <MenuLink to="/perfil" onClick={() => setOpen(false)}>
                 Perfil
               </MenuLink>

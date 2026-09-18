@@ -24,3 +24,7 @@ export const listReservationsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(200).default(50),
 });
+
+export const idParamSchema = z.string().uuid();
+
+export const eventIdQuerySchema = z.object({ eventId: z.string().uuid() });
