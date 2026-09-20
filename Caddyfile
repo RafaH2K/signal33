@@ -1,0 +1,21 @@
+# HTTPS automático (Let's Encrypt). La cámara del escáner de taquilla sólo
+# funciona en https, así que esto no es opcional para el día del evento.
+{$SITE_DOMAIN} {
+	encode gzip
+
+	# API y archivos subidos van al backend
+	handle /api/* {
+		reverse_proxy api:4000
+	}
+	handle /uploads/* {
+		reverse_proxy api:4000
+	}
+
+	# el resto es el sitio ya compilado (React); al ser una SPA, cualquier ruta
+	# desconocida devuelve index.html para que el router del navegador decida
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

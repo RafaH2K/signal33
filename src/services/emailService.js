@@ -72,5 +72,6 @@ export async function sendReservationEmail({ reservation, tickets }) {
       </div>`,
   });
 
-  if (error) logger.error({ error, reservationId: reservation.id }, 'Failed to send reservation email');
+  // la cola necesita enterarse del fallo para reintentar: por eso lanza
+  if (error) throw new Error(error.message ?? 'Resend rechazó el envío');
 }

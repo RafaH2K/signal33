@@ -2,6 +2,11 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { app } from '../src/app.js';
 import { pool } from '../src/database/pool.js';
+import { setKickEnabled } from '../src/services/emailQueueService.js';
+
+// en los tests la cola de correos se procesa a mano: si no, el envío
+// automático al apartar compite con lo que la prueba quiere observar
+setKickEnabled(false);
 
 export { assert };
 

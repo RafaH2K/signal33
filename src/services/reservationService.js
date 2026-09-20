@@ -2,8 +2,7 @@ import { AppError } from '../utils/AppError.js';
 import { generateTicketCode, generateTrackingCode } from '../utils/codes.js';
 import * as reservationRepository from '../repositories/reservationRepository.js';
 import * as eventRepository from '../repositories/eventRepository.js';
-import * as emailService from './emailService.js';
-import { logger } from '../config/logger.js';
+import * as emailQueueService from './emailQueueService.js';
 
 const PRICE_COLUMN = { GENERAL: 'price_general', OPEN_BAR: 'price_open_bar' };
 const CAPACITY_COLUMN = { GENERAL: 'capacity_general', OPEN_BAR: 'capacity_open_bar' };
@@ -74,21 +73,11 @@ export async function createReservation({ eventId, fullName, email, accessType, 
   }
 
   const { reservation, tickets } = result;
-  await sendEmail({ ...reservation, event_title: event.title, event_date: event.event_date, venue: event.venue }, tickets);
+  // el correo sale por la cola: la respuesta no espera al proveedor y, si
+  // falla, se reintenta solo en vez de perderse
+  emailQueueService.kick();
 
   return { ...reservation, tickets };
-}
-
-// el correo nunca debe tumbar la reserva: ya quedó apartada y el código de
-// seguimiento se muestra en pantalla aunque el envío falle
-async function sendEmail(reservation, tickets) {
-  try {
-    await emailService.sendReservationEmail({ reservation, tickets });
-    return true;
-  } catch (error) {
-    logger.error({ error, reservationId: reservation.id }, 'Reservation email failed');
-    return false;
-  }
 }
 
 export async function trackReservation(trackingCode) {
@@ -153,12 +142,11 @@ export async function cancelReservation(id, userId) {
 }
 
 export async function resendEmail(id, userId) {
-  const reservation = await getActiveReservation(id);
-  const tickets = await reservationRepository.findTickets(id);
-  const sent = await sendEmail(reservation, tickets);
-  if (!sent) throw new AppError('No se pudo enviar el correo, revisá la configuración de Resend', 502);
+  await getActiveReservation(id);
+  await reservationRepository.requeueEmail(id);
   await reservationRepository.logAction(id, 'EMAIL_RESENT', userId);
-  return { sent: true };
+  emailQueueService.kick();
+  return { queued: true };
 }
 
 export async function getEventStats(eventId) {

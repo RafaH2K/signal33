@@ -13,6 +13,12 @@ const PAID_FILTERS = [
   { value: 'true', label: 'Pagadas' },
 ];
 
+const EMAIL_STATUS = {
+  PENDING: { label: 'Correo en camino', className: 'text-amber-400' },
+  SENT: { label: 'Correo entregado al proveedor', className: 'text-mist-dim' },
+  FAILED: { label: 'El correo NO salió: dictale su código o reenvialo', className: 'text-red-400' },
+};
+
 const LOG_LABEL = {
   PAID: 'Marcó pagado',
   UNPAID: 'Marcó NO pagado',
@@ -404,6 +410,10 @@ function ReservationDetail({ id, canCancel, onChanged, onClose }) {
         </dd>
         <dt className="text-xs uppercase tracking-wide-caps text-mist">Total</dt>
         <dd className="text-right font-mono">{formatMoney(reservation.amount_due)}</dd>
+        <dt className="text-xs uppercase tracking-wide-caps text-mist">Correo</dt>
+        <dd className={`text-right text-xs ${EMAIL_STATUS[reservation.email_status]?.className ?? ''}`}>
+          {EMAIL_STATUS[reservation.email_status]?.label ?? reservation.email_status}
+        </dd>
         <dt className="text-xs uppercase tracking-wide-caps text-mist">Pago</dt>
         <dd className="text-right">
           <PaidBadge isPaid={reservation.is_paid} />
@@ -461,7 +471,7 @@ function ReservationDetail({ id, canCancel, onChanged, onClose }) {
       <div className="flex flex-wrap gap-4">
         <button
           type="button"
-          onClick={() => run(() => reservationsApi.resendEmail(reservation.id), `Correo reenviado a ${reservation.email}`)}
+          onClick={() => run(() => reservationsApi.resendEmail(reservation.id), `Correo en cola para ${reservation.email}`)}
           disabled={busy}
           className="text-xs uppercase tracking-wide-caps text-mist transition hover:text-paper disabled:opacity-50"
         >

@@ -2,15 +2,15 @@ import { Router } from 'express';
 import * as reservationController from '../controllers/reservationController.js';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
-import { reservationLimiter } from '../middlewares/rateLimit.js';
+import { boxOfficeLimiter, reservationEmailLimiter, reservationLimiter } from '../middlewares/rateLimit.js';
 
 export const reservationRoutes = Router();
 
-const boxOffice = [authenticate, authorize('ADMIN', 'STAFF')];
-const adminOnly = [authenticate, authorize('ADMIN')];
+const boxOffice = [boxOfficeLimiter, authenticate, authorize('ADMIN', 'STAFF')];
+const adminOnly = [boxOfficeLimiter, authenticate, authorize('ADMIN')];
 
 // públicas: apartar, disponibilidad, consultar por código de seguimiento y ver el QR
-reservationRoutes.post('/', reservationLimiter, reservationController.create);
+reservationRoutes.post('/', reservationLimiter, reservationEmailLimiter, reservationController.create);
 reservationRoutes.get('/availability/:eventId', reservationController.availability);
 reservationRoutes.get('/track/:trackingCode', reservationController.track);
 reservationRoutes.get('/tickets/:code/qr.png', reservationController.qr);

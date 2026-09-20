@@ -19,6 +19,7 @@ export const env = {
     user: required('DATABASE_USER'),
     password: required('DATABASE_PASSWORD'),
     ssl: process.env.DATABASE_SSL === 'true',
+    poolMax: Number(process.env.DATABASE_POOL_MAX) || 20,
   },
 
   jwt: {
@@ -38,11 +39,19 @@ export const env = {
     fromEmail: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
   },
 
+  email: {
+    // cuántos correos se mandan a la vez: subirlo sólo si tu plan lo permite
+    queueConcurrency: Number(process.env.EMAIL_QUEUE_CONCURRENCY) || 2,
+  },
+
   storage: {
     provider: process.env.STORAGE_PROVIDER || 'local',
     bucket: process.env.STORAGE_BUCKET,
     apiKey: process.env.STORAGE_API_KEY,
   },
+
+  // sólo para pruebas de carga contra un entorno aislado: nunca en producción
+  rateLimitEnabled: process.env.RATE_LIMIT_ENABLED !== 'false',
 
   logLevel: process.env.LOG_LEVEL || 'info',
 };

@@ -1,4 +1,7 @@
-export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api';
+// En producción el sitio y la API viven en el mismo dominio (Caddy manda /api
+// al backend), así que la ruta relativa evita configurar la URL en cada deploy
+// y de paso evita problemas de CORS.
+export const API_URL = import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? 'http://localhost:4000/api' : '/api');
 
 export class ApiError extends Error {
   constructor(message, status) {

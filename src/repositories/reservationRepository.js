@@ -160,6 +160,14 @@ export async function cancel(id, userId) {
   });
 }
 
+export async function requeueEmail(id) {
+  await query(
+    `UPDATE reservations SET email_status = 'PENDING', email_attempts = 0, email_next_attempt_at = now()
+     WHERE id = $1`,
+    [id]
+  );
+}
+
 export function logAction(reservationId, action, userId, detail) {
   return log({ query }, reservationId, action, userId, detail);
 }
