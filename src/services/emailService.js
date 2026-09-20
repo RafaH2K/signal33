@@ -33,10 +33,19 @@ function formatEventDate(date) {
   }).format(new Date(date));
 }
 
-// Los QR van como <img> apuntando al endpoint público del boleto en vez de ir
-// adjuntos: así el correo pesa poco y el mismo enlace sirve si lo reenvían.
+// identificador del QR incrustado dentro del correo
+function qrContentId(ticket) {
+  return `qr-${ticket.code}@signal33`;
+}
+
+// QR servido por la API: sirve para la vista previa en el navegador; el correo
+// real usa la versión incrustada (cid:)
+function remoteQrSrc(ticket) {
+  return `${env.appUrl}/api/reservations/tickets/${ticket.code}/qr.png`;
+}
+
 // separado del envío para poder previsualizarlo y probarlo sin mandar nada
-export function buildReservationEmail({ reservation, tickets }) {
+export function buildReservationEmail({ reservation, tickets, qrSrc = remoteQrSrc }) {
   const trackUrl = `${env.frontendUrl}/boletos/${reservation.tracking_code}`;
   const amount = Number(reservation.amount_due ?? 0);
   const amountText = amount > 0 ? `: ${formatMoney(amount)}` : '';
@@ -48,7 +57,7 @@ export function buildReservationEmail({ reservation, tickets }) {
           <p style="margin:0 0 4px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#666">
             Acceso ${index + 1} de ${tickets.length} · ${ACCESS_LABELS[reservation.access_type]}
           </p>
-          <img src="${env.appUrl}/api/reservations/tickets/${ticket.code}/qr.png"
+          <img src="${qrSrc(ticket)}"
                alt="Código QR del acceso ${index + 1}" width="220" height="220" style="display:block;margin:8px auto" />
           <p style="margin:0;font-family:monospace;font-size:14px;letter-spacing:.08em">${ticket.code}</p>
           <p style="margin:6px 0 0;font-size:11px;color:#888">Si no ves el QR, está adjunto a este correo.</p>
@@ -75,15 +84,21 @@ export function buildReservationEmail({ reservation, tickets }) {
 }
 
 export async function sendReservationEmail({ reservation, tickets }) {
-  const { subject, html } = buildReservationEmail({ reservation, tickets });
+  // Los QR viajan dentro del correo (cid:), no como imagen remota: así se ven
+  // sin depender de que el servidor sea alcanzable desde fuera ni de que el
+  // cliente de correo permita cargar imágenes externas.
+  const { subject, html } = buildReservationEmail({
+    reservation,
+    tickets,
+    qrSrc: (ticket) => `cid:${qrContentId(ticket)}`,
+  });
 
-  // Los QR van también adjuntos, no sólo como <img> remota: muchos clientes de
-  // correo bloquean imágenes externas por defecto, y así la persona siempre
-  // tiene su código aunque no se carguen.
   const attachments = await Promise.all(
     tickets.map(async (ticket, index) => ({
       filename: `acceso-${index + 1}-${ticket.code}.png`,
       content: (await renderQrPng(ticketQrPayload(env.frontendUrl, ticket.code))).toString('base64'),
+      contentType: 'image/png',
+      contentId: qrContentId(ticket),
     }))
   );
 
