@@ -9,6 +9,9 @@ export default function QrScanner({ onScan }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [cameraError, setCameraError] = useState('');
+  // se alterna entre cuadros: intentar ambas orientaciones en cada uno duplica
+  // el trabajo del celular y baja los cuadros por segundo
+  const invertNext = useRef(false);
 
   useEffect(() => {
     let stream;
@@ -40,7 +43,12 @@ export default function QrScanner({ onScan }) {
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const qr = jsQR(image.data, image.width, image.height, { inversionAttempts: 'dontInvert' });
+        // normal en un cuadro, invertido en el siguiente: así también se leen
+        // boletos impresos en negativo o pantallas con filtro de color
+        invertNext.current = !invertNext.current;
+        const qr = jsQR(image.data, image.width, image.height, {
+          inversionAttempts: invertNext.current ? 'onlyInvert' : 'dontInvert',
+        });
         const code = qr && extractTicketCode(qr.data);
         if (code) {
           navigator.vibrate?.(80);
