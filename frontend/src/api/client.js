@@ -1,7 +1,8 @@
-// En producción el sitio y la API viven en el mismo dominio (Caddy manda /api
-// al backend), así que la ruta relativa evita configurar la URL en cada deploy
-// y de paso evita problemas de CORS.
-export const API_URL = import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? 'http://localhost:4000/api' : '/api');
+// Siempre relativo: en producción Caddy manda /api al backend y en desarrollo
+// lo hace el proxy de Vite. Así no hay que configurar la URL en cada deploy,
+// no hay problemas de CORS, y un celular en la red local puede usar el sitio
+// sin conocer la dirección del backend.
+export const API_URL = import.meta.env.VITE_API_URL ?? '/api';
 
 export class ApiError extends Error {
   constructor(message, status) {

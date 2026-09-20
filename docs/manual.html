@@ -95,7 +95,7 @@
     y qué hay que hacer para subirlo a un servidor.
   </p>
   <div class="meta">
-    Haunted Frequency &middot; Manual v1<br />
+    Haunted Frequency &middot; Manual v2<br />
     Para el equipo de SIGNAL33
   </div>
 </div>
@@ -188,65 +188,86 @@
 
   <p>
     Esta es la parte que el personal de la puerta tiene que conocer. Se entra desde el círculo
-    con la inicial, arriba a la derecha, opción <strong>Taquilla</strong>.
+    con la inicial, arriba a la derecha, opción <strong>Taquilla</strong>. Está pensada para
+    usarse desde el celular, con una mano y sin mirar mucho.
   </p>
 
+  <div class="box">
+    <h3>La idea: apuntar y listo</h3>
+    <p style="margin:0">
+      La cámara queda <strong>encendida todo el tiempo</strong>. No hay que tocar "escanear"
+      con cada persona: se apunta al código, aparece la ficha, se cobra si hace falta, se toca
+      <em>Dar acceso</em>, y la pantalla <strong>vuelve sola a la cámara</strong> para el
+      siguiente de la fila.
+    </p>
+  </div>
+
   <figure>
-    <img src="capturas/04-taquilla.png" alt="Pantalla de taquilla" />
-    <figcaption>Arriba los contadores en vivo (apartados, pagados, adentro y dinero cobrado). En medio la validación. Abajo la lista de reservas.</figcaption>
+    <img src="capturas/04-taquilla.png" alt="Pantalla de taquilla en el celular" />
+    <figcaption>Arriba, los contadores en vivo. Debajo, la cámara lista. La lista de reservas está plegada más abajo para que no estorbe.</figcaption>
   </figure>
 
   <h3>Cada persona que llega</h3>
   <div class="paso"><div class="n">1</div><div class="t">
-    <strong>Escanear</strong>
-    Botón <em>Escanear QR</em> y apuntar la cámara. Si no lee, se teclea el código de 16
-    caracteres que viene debajo del QR.
+    <strong>Apuntar</strong>
+    Que el código quede dentro del recuadro azul. No hay que tocar nada.
   </div></div>
   <div class="paso"><div class="n">2</div><div class="t">
-    <strong>Mirar el color</strong>
-    Amarillo = falta cobrar. Verde = ya pagó. Rojo = algo está mal, no pasa.
+    <strong>Mirar el color y oír el sonido</strong>
+    Amarillo y nota corta = falta cobrar. Verde y dos notas que suben = puede pasar.
+    Rojo y nota grave = no pasa.
   </div></div>
   <div class="paso"><div class="n">3</div><div class="t">
-    <strong>Cobrar y dejar pasar</strong>
-    Si falta pagar, se cobra y se toca <em>Cobrar → marcar pagado</em>. Luego <em>Dar acceso</em>.
+    <strong>Cobrar si hace falta</strong>
+    El botón amarillo dice cuánto cobrar. Al tocarlo queda marcada como pagada.
   </div></div>
   <div class="paso"><div class="n">4</div><div class="t">
-    <strong>Siguiente</strong>
-    El botón <em>Escanear siguiente</em> vuelve directo a la cámara.
+    <strong>Dar acceso</strong>
+    Botón grande blanco. Sale el verde y a los 2 segundos vuelve sola a la cámara.
   </div></div>
 
   <figure>
     <img src="capturas/05-sin-pagar.png" alt="Boleto sin pagar" />
-    <figcaption><span class="tag amarillo">No pagado</span> &nbsp; El botón "Dar acceso" está apagado. Primero se cobra el monto que dice el botón amarillo.</figcaption>
+    <figcaption><span class="tag amarillo">Falta cobrar</span> &nbsp; El botón dice el monto. "Dar acceso" está apagado hasta que se cobre.</figcaption>
   </figure>
 
   <figure>
-    <img src="capturas/06-acceso-concedido.png" alt="Acceso concedido" />
-    <figcaption><span class="tag verde">Acceso concedido</span> &nbsp; Puede pasar. El recuadro de color dice qué pulsera ponerle: azul general, morado barra libre.</figcaption>
+    <img src="capturas/06-puede-pasar.png" alt="Puede pasar" />
+    <figcaption><span class="tag verde">Puede pasar</span> &nbsp; El recuadro de color dice qué pulsera ponerle: azul general, morado barra libre.</figcaption>
   </figure>
 
   <figure>
     <img src="capturas/07-ya-usado.png" alt="Boleto ya usado" />
-    <figcaption><span class="tag rojo">Ya fue usado</span> &nbsp; Ese QR ya entró. Dice a qué hora y quién lo validó. No dejarlo pasar y avisar al coordinador.</figcaption>
+    <figcaption><span class="tag rojo">Ya fue usado</span> &nbsp; Ese código ya entró. Dice la hora y quién lo validó. No dejarlo pasar y avisar al coordinador.</figcaption>
   </figure>
 
   <h3>Qué significa cada pantalla</h3>
   <table>
     <tr><th>Lo que ves</th><th>Qué pasó</th><th>Qué hacés</th></tr>
-    <tr><td><strong>No pagado</strong> (amarillo)</td><td>Apartó pero no ha pagado</td><td>Cobrás, tocás "Cobrar → marcar pagado", confirmás y luego "Dar acceso"</td></tr>
-    <tr><td><strong>Acceso concedido</strong> (verde)</td><td>Entró correctamente</td><td>Pulsera según el color y siguiente</td></tr>
-    <tr><td><strong>Ya fue usado</strong> (rojo)</td><td>Ese QR ya entró antes</td><td>No pasa. La pantalla dice la hora y quién lo validó</td></tr>
+    <tr><td><strong>Falta cobrar</strong> (amarillo)</td><td>Apartó pero no ha pagado</td><td>Cobrás el monto que dice el botón, lo tocás, y luego "Dar acceso"</td></tr>
+    <tr><td><strong>Puede pasar</strong> (verde)</td><td>Entró correctamente</td><td>Pulsera según el color. Vuelve sola a la cámara</td></tr>
+    <tr><td><strong>Ya fue usado</strong> (rojo)</td><td>Ese código ya entró antes</td><td>No pasa. La pantalla dice la hora y quién lo validó</td></tr>
     <tr><td><strong>Otro evento</strong> (rojo)</td><td>Boleto de otra fecha</td><td>No pasa</td></tr>
-    <tr><td><strong>Código inválido</strong> (rojo)</td><td>El código no existe</td><td>Buscarlo por nombre en la lista de abajo</td></tr>
+    <tr><td><strong>Código inválido</strong> (rojo)</td><td>El código no existe o se canceló</td><td>Buscarlo por nombre en "Buscar una reserva"</td></tr>
   </table>
+
+  <div class="box ojo">
+    <h3>Detalles que conviene saber</h3>
+    <ul style="margin-bottom:0">
+      <li><strong>Los sonidos no suenan hasta que tocás la pantalla una vez.</strong> Es una regla de los celulares, no un error. Con tocar una vez al abrir la taquilla, ya suenan toda la noche.</li>
+      <li><strong>La pantalla no se apaga sola</strong> mientras el escáner está abierto.</li>
+      <li>Si el mismo código se queda frente a la cámara, <strong>no se relee</strong>: no hay doble escaneo por accidente.</li>
+      <li>Si la cámara no lee (pantalla rayada, brillo bajo, mica), está el botón <strong>Escribir código</strong> para teclear los 16 caracteres.</li>
+    </ul>
+  </div>
 
   <h3>Casos que van a pasar</h3>
   <table>
     <tr><th>Situación</th><th>Solución</th></tr>
-    <tr><td>Perdió el correo o se quedó sin batería</td><td>Buscarlo por nombre o correo en la lista, pedir identificación y usar "Dar acceso" desde su ficha</td></tr>
+    <tr><td>Perdió el correo o se quedó sin batería</td><td>Abrir "Buscar una reserva", buscarlo por nombre o correo, pedir identificación y validar desde su ficha</td></tr>
     <tr><td>Dice que nunca le llegó el correo</td><td>En su ficha se ve el estado del correo. Botón "Reenviar correo", o dictarle su código de seguimiento</td></tr>
     <tr><td>Llegan dos con una sola reserva</td><td>El pago cubre los dos accesos, pero cada QR se escanea por separado</td></tr>
-    <tr><td>Se marcó pagado por error</td><td>Abrir la ficha y usar "Corregir: marcar NO pagado". Queda en el historial</td></tr>
+    <tr><td>Se marcó pagado por error</td><td>Abrir la ficha en "Buscar una reserva" y usar "Corregir: marcar NO pagado". Queda en el historial</td></tr>
     <tr><td>Discute que ya pagó</td><td>Abrir su ficha y mirar el Historial: dice quién cobró y a qué hora</td></tr>
     <tr><td>Se cae el internet</td><td>Usar la lista impresa y marcar a mano. Después se captura en el sistema</td></tr>
   </table>
@@ -255,8 +276,9 @@
     <h3>Antes de abrir la puerta</h3>
     <ul>
       <li>Celulares cargados y con batería externa a la mano.</li>
-      <li><strong>Imprimir la lista de respaldo</strong>: botón "Descargar lista" en Taquilla. Sin internet, esa hoja es lo único que queda.</li>
+      <li><strong>Imprimir la lista de respaldo</strong>: botón "Descargar lista". Sin internet, esa hoja es lo único que queda.</li>
       <li>Comprobar arriba que el evento seleccionado es el correcto.</li>
+      <li>Tocar la pantalla una vez para activar los sonidos, y probar un escaneo antes de que llegue la fila.</li>
       <li>Al cerrar, la sección <strong>Corte de caja</strong> dice cuánto entrega cada quien.</li>
     </ul>
   </div>
@@ -407,6 +429,11 @@ docker compose up -d --build</pre>
       <td>Falta SPF/DKIM/DMARC</td>
       <td>Verificar el dominio en Resend y esperar a que propague el DNS</td>
     </tr>
+    <tr>
+      <td>Se despliega un cambio y el personal sigue viendo la versión vieja</td>
+      <td>El navegador guardó en caché la versión anterior</td>
+      <td>Que cierren la pestaña y vuelvan a abrir, o usen una ventana privada. Pasó en las pruebas y cuesta detectarlo</td>
+    </tr>
   </table>
 
   <h3>Durante la venta</h3>
@@ -435,7 +462,17 @@ docker compose up -d --build</pre>
     <tr>
       <td>La cámara no lee un QR</td>
       <td>Brillo bajo, pantalla rayada o mica</td>
-      <td>Pedir que suban el brillo; si no, teclear el código de 16 caracteres</td>
+      <td>Pedir que suban el brillo; si no, botón "Escribir código" y teclear los 16 caracteres</td>
+    </tr>
+    <tr>
+      <td>No se oyen los sonidos</td>
+      <td>Los celulares no dejan sonar una página hasta que el usuario la toca</td>
+      <td>Tocar la pantalla una vez al abrir la taquilla</td>
+    </tr>
+    <tr>
+      <td>Se abre la cámara pero no lee nada</td>
+      <td>Versión vieja en caché, o permiso de cámara denegado</td>
+      <td>Cerrar y reabrir la pestaña. Revisar el permiso de cámara del sitio</td>
     </tr>
     <tr>
       <td>Se cae el internet del lugar</td>
@@ -459,14 +496,34 @@ docker compose up -d --build</pre>
     </tr>
   </table>
 
+  <h3>Qué está probado y qué no</h3>
+  <table>
+    <tr><th>Probado</th><th>Cómo</th></tr>
+    <tr><td>Apartar, límite de 2 por persona, cupo, cobro y validación</td><td>46 pruebas automáticas, incluidos envíos simultáneos</td></tr>
+    <tr><td>Que un QR no se pueda reusar</td><td>Prueba automática con dos lectores escaneando a la vez</td></tr>
+    <tr><td>Generar y volver a leer los QR</td><td>Prueba automática con 21 códigos distintos</td></tr>
+    <tr><td>Escanear con cámara real</td><td>iPhone contra la pantalla de una laptop, en la red local</td></tr>
+    <tr><td>Carga de 10 000 reservas</td><td>Script de prueba, sin errores, en una laptop</td></tr>
+  </table>
+
   <div class="box alerta">
-    <h3>Lo que todavía no está probado</h3>
-    <ul>
-      <li>El sistema <strong>nunca ha corrido en un servidor real</strong>, sólo en la computadora de desarrollo.</li>
-      <li>La prueba de carga (10 000 reservas sin errores) se hizo en una laptop, no en el servidor definitivo. <strong>Hay que repetirla ahí.</strong></li>
-      <li>El escaneo se probó con un solo celular. Conviene probar con varios, sobre todo iPhone y Android viejos.</li>
+    <h3>Lo que falta probar</h3>
+    <ul style="margin-bottom:0">
+      <li>El sistema <strong>nunca ha corrido en un servidor real</strong>, sólo en la computadora de desarrollo y en la red local.</li>
+      <li>La prueba de carga se hizo en una laptop, no en el servidor definitivo. <strong>Hay que repetirla ahí.</strong></li>
+      <li>El escaneo se probó con <strong>un solo teléfono</strong>. Conviene probar con varios, sobre todo Android viejos.</li>
+      <li>Nunca se ha usado con fila real ni con varias taquillas trabajando al mismo tiempo.</li>
       <li>Si se usa más de una instancia del servidor, los límites por conexión se cuentan por separado en cada una.</li>
     </ul>
+  </div>
+
+  <div class="box ojo">
+    <h3>Pendiente de configurar</h3>
+    <p style="margin:0">
+      En las capturas los montos aparecen en <strong>$0</strong> porque el evento todavía no
+      tiene precios cargados. Hay que ponerlos en Eventos → Editar antes de abrir la venta, o
+      en la puerta el botón dirá "Cobrar $0".
+    </p>
   </div>
 </section>
 

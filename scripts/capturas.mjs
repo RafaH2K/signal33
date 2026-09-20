@@ -36,8 +36,20 @@ async function shot(page, name, caption) {
 await mkdir(OUT, { recursive: true });
 const session = EMAIL && PASSWORD ? await login() : null;
 
-const browser = await chromium.launch({ channel: 'msedge' });
+const browser = await chromium.launch({
+  channel: 'msedge',
+  // cámara sintética: así el modo puerta aparece funcionando en las capturas
+  args: [
+    '--use-fake-ui-for-media-stream',
+    '--use-fake-device-for-media-stream',
+    // video con un QR real, para que las capturas muestren el escáner leyendo
+    ...(process.env.DOCS_CAMERA_VIDEO ? [`--use-file-for-fake-video-capture=${process.env.DOCS_CAMERA_VIDEO}`] : []),
+  ],
+});
 const context = await browser.newContext({
+  permissions: ['camera'],
+  // en desarrollo el sitio usa un certificado propio
+  ignoreHTTPSErrors: true,
   viewport: { width: 1280, height: 900 },
   deviceScaleFactor: 2,
   locale: 'es-MX',
@@ -84,31 +96,59 @@ if (process.env.DOCS_TRACKING_CODE) {
   await shot(page, '03-boleto', 'Lo que ve el asistente: sus QR, el estado del pago y su código de seguimiento.');
 }
 
-await go('/admin/taquilla');
-await shot(page, '04-taquilla', 'La pantalla de taquilla: contadores arriba, validación en medio y la lista de reservas abajo.');
+// la puerta se usa desde el celular: estas capturas van en tamaño teléfono
+const puerta = await context.newPage();
+await puerta.setViewportSize({ width: 420, height: 880 });
 
-async function validar(code) {
-  await go('/admin/taquilla');
-  await page.getByPlaceholder('o escribí el código').fill(code);
-  await page.getByRole('button', { name: 'Buscar' }).click();
-  await page.waitForTimeout(1400);
+async function irPuerta() {
+  await puerta.goto(`${SITE}/taquilla`, { waitUntil: 'networkidle' });
+  await puerta.waitForTimeout(1500);
 }
 
-if (DEMO_CODE) {
-  await validar(DEMO_CODE);
-  await shot(page, '05-sin-pagar', 'AMARILLO: la persona no ha pagado. "Dar acceso" está apagado hasta que se cobre.');
+async function shotPuerta(name, caption) {
+  const file = `${OUT}/${name}.png`;
+  await puerta.screenshot({ path: file });
+  shots.push({ file: `capturas/${name}.png`, caption });
+  console.log(`  ${name}.png`);
 }
 
-if (process.env.DOCS_TICKET_PAID) {
-  await validar(process.env.DOCS_TICKET_PAID);
-  await page.getByRole('button', { name: /Dar acceso/i }).click();
-  await page.waitForTimeout(1400);
-  await shot(page, '06-acceso-concedido', 'VERDE: puede pasar. El color grande indica qué pulsera ponerle.');
+await irPuerta();
+await puerta.waitForTimeout(2500);
+await shotPuerta('04-taquilla', 'La puerta desde el celular: la cámara queda encendida y sólo hay que apuntar.');
+
+// el modo puerta deja la cámara encendida; para las capturas se usa la
+// entrada manual, que lleva a la misma ficha
+async function validarManual(code) {
+  await irPuerta();
+  await puerta.getByRole('button', { name: 'Escribir código' }).click();
+  await puerta.getByPlaceholder('Código de 16 caracteres').fill(code);
+  await puerta.getByRole('button', { name: 'Buscar', exact: true }).click();
+  await puerta.waitForTimeout(1500);
 }
 
-if (process.env.DOCS_TICKET_USED) {
-  await validar(process.env.DOCS_TICKET_USED);
-  await shot(page, '07-ya-usado', 'ROJO: ese QR ya entró. Dice a qué hora y quién lo validó. No dejarlo pasar.');
+if (process.env.DOCS_TICKET_UNPAID) {
+  await validarManual(process.env.DOCS_TICKET_UNPAID);
+  await shotPuerta('05-sin-pagar', 'AMARILLO: falta cobrar. El botón grande dice cuánto. "Dar acceso" está apagado hasta cobrar.');
+}
+
+if (process.env.DOCS_TICKET_GREEN) {
+  await validarManual(process.env.DOCS_TICKET_GREEN);
+  await puerta.getByRole('button', { name: /^Cobrar/ }).click();
+  await puerta.waitForTimeout(1000);
+  await puerta.getByRole('button', { name: 'Dar acceso' }).click();
+  await puerta.waitForTimeout(800);
+  await shotPuerta('06-puede-pasar', 'VERDE: puede pasar. A los 2 segundos vuelve sola a la cámara para el siguiente.');
+}
+
+if (process.env.DOCS_TICKET_RED) {
+  // se usa una vez y se vuelve a escanear para mostrar el rechazo
+  await validarManual(process.env.DOCS_TICKET_RED);
+  await puerta.getByRole('button', { name: /^Cobrar/ }).click();
+  await puerta.waitForTimeout(900);
+  await puerta.getByRole('button', { name: 'Dar acceso' }).click();
+  await puerta.waitForTimeout(2600);
+  await validarManual(process.env.DOCS_TICKET_RED);
+  await shotPuerta('07-ya-usado', 'ROJO: ese código ya entró. Dice la hora y quién lo validó. Suena distinto al verde.');
 }
 
 if (process.env.DOCS_EMAIL_HTML) {

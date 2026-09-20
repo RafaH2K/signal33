@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { eventsApi, reservationsApi } from '../../api/resources.js';
 import { useAuth } from '../../context/AuthContext.jsx';
-import QrScanner from '../../components/admin/QrScanner.jsx';
-import TicketCheckPanel from '../../components/admin/TicketCheckPanel.jsx';
+import DoorMode from '../../components/admin/DoorMode.jsx';
 import Modal from '../../components/admin/Modal.jsx';
 import { AccessBadge, PaidBadge } from '../../components/tickets/Badges.jsx';
-import { ACCESS_LABEL, extractTicketCode, formatMoney, formatTime } from '../../lib/tickets.js';
+import { ACCESS_LABEL, formatMoney, formatTime } from '../../lib/tickets.js';
 
 const PAID_FILTERS = [
   { value: '', label: 'Todas' },
@@ -39,10 +38,8 @@ export default function BoxOffice() {
   const [reservations, setReservations] = useState(null);
   const [paidFilter, setPaidFilter] = useState('');
   const [search, setSearch] = useState('');
-  const [scanning, setScanning] = useState(false);
-  const [scannedCode, setScannedCode] = useState(null);
-  const [manualCode, setManualCode] = useState('');
   const [detailId, setDetailId] = useState(null);
+  const [verLista, setVerLista] = useState(false);
   const [exportError, setExportError] = useState('');
 
   useEffect(() => {
@@ -80,28 +77,6 @@ export default function BoxOffice() {
     };
   }, [load]);
 
-  const handleScan = useCallback((code) => {
-    setScanning(false);
-    setScannedCode(code);
-  }, []);
-
-  function handleManual(e) {
-    e.preventDefault();
-    const code = extractTicketCode(manualCode);
-    if (code) {
-      setScannedCode(code);
-      setManualCode('');
-    }
-  }
-
-  // "Escanear siguiente" vuelve directo a la cámara: en la fila no hay tiempo
-  // para tocar dos botones por persona
-  function nextScan() {
-    setScannedCode(null);
-    setScanning(true);
-    load();
-  }
-
   async function handleExport() {
     setExportError('');
     try {
@@ -123,12 +98,12 @@ export default function BoxOffice() {
 
   return (
     <div>
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-xl uppercase tracking-wide-caps">Taquilla</h1>
         <select
           value={eventId}
           onChange={(e) => setEventId(e.target.value)}
-          className="max-w-full border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper outline-none"
+          className="max-w-full border border-line-strong bg-ink px-3 py-2 text-xs text-paper outline-none"
         >
           {events.map((event) => (
             <option key={event.id} value={event.id}>
@@ -138,48 +113,30 @@ export default function BoxOffice() {
         </select>
       </div>
 
-      {stats && <StatsPanel stats={stats} />}
+      {/* Contadores en una tira delgada: en la puerta lo que importa es la
+          cámara, no las cifras, pero conviene tenerlas a la vista. */}
+      {stats && (
+        <div className="mb-4 flex items-center justify-between gap-2 border border-line px-4 py-2 font-mono text-xs text-mist">
+          <span>{stats.reserved} apartados</span>
+          <span>{stats.paid} pagados</span>
+          <span className="text-paper">{stats.checkedIn} adentro</span>
+          <span>{formatMoney(stats.collected)}</span>
+        </div>
+      )}
 
-      <section className="mb-12 border border-line p-5 sm:p-6">
-        <h2 className="mb-5 text-xs uppercase tracking-wide-caps text-mist">Validar acceso</h2>
-        {scannedCode ? (
-          <TicketCheckPanel key={scannedCode} code={scannedCode} expectedEventId={eventId} onDone={nextScan} />
-        ) : scanning ? (
-          <div className="flex flex-col gap-4">
-            <QrScanner onScan={handleScan} />
-            <button
-              type="button"
-              onClick={() => setScanning(false)}
-              className="py-2 text-xs uppercase tracking-wide-caps text-mist transition hover:text-paper"
-            >
-              Cerrar cámara
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <button
-              type="button"
-              onClick={() => setScanning(true)}
-              className="bg-paper px-6 py-4 font-display text-sm uppercase tracking-wide-caps text-ink transition hover:opacity-90"
-            >
-              Escanear QR
-            </button>
-            <form onSubmit={handleManual} className="flex flex-1 gap-2">
-              <input
-                value={manualCode}
-                onChange={(e) => setManualCode(e.target.value)}
-                placeholder="o escribí el código de 16 caracteres"
-                className="min-w-0 flex-1 border border-line-strong bg-transparent px-4 py-3 font-mono text-sm uppercase text-paper outline-none placeholder:normal-case placeholder:text-mist-dim focus:border-signal"
-              />
-              <button type="submit" className="border border-line-strong px-4 text-xs uppercase tracking-wide-caps text-mist hover:text-paper">
-                Buscar
-              </button>
-            </form>
-          </div>
-        )}
-      </section>
+      <DoorMode eventId={eventId} onChanged={load} />
 
-      <section className="mb-12">
+      <section className="mb-12 mt-12">
+        <button
+          type="button"
+          onClick={() => setVerLista((v) => !v)}
+          className="mb-4 flex w-full items-center justify-between border border-line px-4 py-3 text-xs uppercase tracking-wide-caps text-mist transition hover:text-paper"
+        >
+          <span>Buscar una reserva {reservations ? `(${reservations.length})` : ''}</span>
+          <span>{verLista ? '−' : '+'}</span>
+        </button>
+
+        <div className={verLista ? 'block' : 'hidden'}>
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <h2 className="mr-auto text-xs uppercase tracking-wide-caps text-mist">Reservas</h2>
           <input
@@ -244,6 +201,7 @@ export default function BoxOffice() {
             ))}
           </ul>
         )}
+        </div>
       </section>
 
       {stats?.byStaff.length > 0 && <CashReport stats={stats} />}
@@ -259,40 +217,6 @@ export default function BoxOffice() {
           />
         )}
       </Modal>
-    </div>
-  );
-}
-
-function StatsPanel({ stats }) {
-  return (
-    <div className="mb-10 border border-line">
-      <div className="grid grid-cols-2 sm:grid-cols-4">
-        <Stat label="Apartados" value={stats.reserved} />
-        <Stat label="Pagados" value={stats.paid} />
-        <Stat label="Adentro" value={stats.checkedIn} />
-        <Stat label="Cobrado" value={formatMoney(stats.collected)} sub={`${formatMoney(stats.pending)} por cobrar`} />
-      </div>
-      <div className="grid border-t border-line sm:grid-cols-2">
-        {stats.byType.map((t) => (
-          <div key={t.type} className="flex items-center justify-between gap-3 px-4 py-3 text-xs sm:border-r sm:border-line sm:last:border-r-0">
-            <AccessBadge type={t.type} />
-            <span className="font-mono text-mist">
-              {t.reserved}
-              {t.capacity !== null ? ` / ${t.capacity}` : ''} apartados · {t.paid} pagados
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function Stat({ label, value, sub }) {
-  return (
-    <div className="border-b border-r border-line px-4 py-4 text-center sm:border-b-0 sm:last:border-r-0">
-      <p className="font-mono text-xl">{value}</p>
-      <p className="mt-1 text-xs uppercase tracking-wide-caps text-mist">{label}</p>
-      {sub && <p className="mt-1 text-[10px] text-mist-dim">{sub}</p>}
     </div>
   );
 }
