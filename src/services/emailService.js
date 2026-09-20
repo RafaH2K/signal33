@@ -34,7 +34,8 @@ function formatEventDate(date) {
 
 // Los QR van como <img> apuntando al endpoint público del boleto en vez de ir
 // adjuntos: así el correo pesa poco y el mismo enlace sirve si lo reenvían.
-export async function sendReservationEmail({ reservation, tickets }) {
+// separado del envío para poder previsualizarlo y probarlo sin mandar nada
+export function buildReservationEmail({ reservation, tickets }) {
   const trackUrl = `${env.frontendUrl}/boletos/${reservation.tracking_code}`;
   const amount = Number(reservation.amount_due ?? 0);
   const amountText = amount > 0 ? `: ${formatMoney(amount)}` : '';
@@ -53,9 +54,7 @@ export async function sendReservationEmail({ reservation, tickets }) {
     )
     .join('');
 
-  const { error } = await resend.emails.send({
-    from: env.resend.fromEmail,
-    to: reservation.email,
+  return {
     subject: `Tu acceso a ${reservation.event_title}`,
     html: `
       <div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;color:#111">
@@ -70,6 +69,17 @@ export async function sendReservationEmail({ reservation, tickets }) {
         <p>Código de seguimiento: <strong style="font-family:monospace">${reservation.tracking_code}</strong></p>
         <p><a href="${trackUrl}">Consultá el estado de tu reserva</a></p>
       </div>`,
+  };
+}
+
+export async function sendReservationEmail({ reservation, tickets }) {
+  const { subject, html } = buildReservationEmail({ reservation, tickets });
+
+  const { error } = await resend.emails.send({
+    from: env.resend.fromEmail,
+    to: reservation.email,
+    subject,
+    html,
   });
 
   // la cola necesita enterarse del fallo para reintentar: por eso lanza
