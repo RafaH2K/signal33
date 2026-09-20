@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>SIGNAL33 · Manual del sistema de boletos</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+
+  :root {
+    --ink: #090909;
+    --paper: #ffffff;
+    --text: #1a1a1a;
+    --muted: #5f5f5f;
+    --line: #dcdcdc;
+    --signal: #2e5eff;
+    --amber: #b45309;
+    --green: #047857;
+    --red: #b91c1c;
+    --sans: 'Archivo', system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--sans); color: var(--text); font-size: 10.5pt; line-height: 1.65; }
+
+  h1, h2, h3 { font-weight: 700; letter-spacing: .02em; }
+  h2 {
+    font-size: 15pt; text-transform: uppercase; letter-spacing: .12em;
+    margin: 0 0 4mm; padding-bottom: 2mm; border-bottom: 2px solid var(--ink);
+  }
+  h3 { font-size: 11.5pt; margin: 7mm 0 2mm; }
+  p { margin: 0 0 3mm; }
+  ul, ol { margin: 0 0 3mm; padding-left: 5mm; }
+  li { margin-bottom: 1.5mm; }
+  code { font-family: var(--mono); font-size: 9pt; background: #f1f1f1; padding: 0.5mm 1.2mm; border-radius: 2px; }
+  pre {
+    font-family: var(--mono); font-size: 8.5pt; line-height: 1.5; background: #f6f6f6;
+    border-left: 3px solid var(--signal); padding: 3mm 4mm; overflow-wrap: break-word; white-space: pre-wrap;
+    margin: 0 0 4mm;
+  }
+  a { color: var(--signal); }
+
+  /* cada sección grande empieza en página nueva, y nada se parte a la mitad */
+  section { page-break-before: always; }
+  section:first-of-type { page-break-before: avoid; }
+  figure, table, .box, .paso { page-break-inside: avoid; }
+
+  .portada {
+    page-break-after: always; background: var(--ink); color: var(--paper);
+    margin: -18mm -16mm 0; padding: 60mm 20mm 20mm; min-height: 267mm;
+  }
+  .portada .logo { font-size: 13pt; font-weight: 600; text-transform: uppercase; letter-spacing: .14em; }
+  .portada .logo span { color: var(--signal); }
+  .portada h1 { font-size: 32pt; text-transform: uppercase; letter-spacing: .06em; line-height: 1.15; margin: 14mm 0 6mm; }
+  .portada p { color: #a3a3a3; font-size: 11pt; max-width: 120mm; }
+  .portada .meta { margin-top: 30mm; font-family: var(--mono); font-size: 9pt; color: #6b6b6b; }
+
+  figure { margin: 0 0 6mm; }
+  figure img { width: 100%; border: 1px solid var(--line); display: block; }
+  figcaption { font-size: 8.5pt; color: var(--muted); margin-top: 1.5mm; }
+
+  table { width: 100%; border-collapse: collapse; margin: 0 0 5mm; font-size: 9.5pt; }
+  th, td { text-align: left; vertical-align: top; padding: 2.2mm 2.5mm; border-bottom: 1px solid var(--line); }
+  th { font-size: 8.5pt; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); border-bottom: 1.5px solid var(--ink); }
+
+  .box { border: 1px solid var(--line); border-left: 3px solid var(--signal); padding: 4mm 5mm; margin: 0 0 5mm; background: #fafafa; }
+  .box.alerta { border-left-color: var(--red); }
+  .box.ojo { border-left-color: var(--amber); }
+  .box h3 { margin-top: 0; }
+
+  .paso { display: flex; gap: 4mm; margin-bottom: 4mm; }
+  .paso .n {
+    flex: 0 0 7mm; height: 7mm; background: var(--ink); color: var(--paper);
+    font-family: var(--mono); font-size: 9pt; display: flex; align-items: center; justify-content: center;
+  }
+  .paso .t { flex: 1; }
+  .paso .t strong { display: block; }
+
+  .tag { font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; padding: 0.8mm 2mm; color: #fff; }
+  .tag.amarillo { background: var(--amber); }
+  .tag.verde { background: var(--green); }
+  .tag.rojo { background: var(--red); }
+
+  .indice ol { padding-left: 6mm; }
+  .indice li { margin-bottom: 2mm; }
+</style>
+</head>
+<body>
+
+<div class="portada">
+  <div class="logo"><span>&#9673;</span>&nbsp; signal33</div>
+  <h1>Sistema de boletos<br />y taquilla</h1>
+  <p>
+    Cómo el público aparta su boleto, cómo se cobra y se valida en la puerta,
+    y qué hay que hacer para subirlo a un servidor.
+  </p>
+  <div class="meta">
+    Haunted Frequency &middot; Manual v1<br />
+    Para el equipo de SIGNAL33
+  </div>
+</div>
+
+<section class="indice">
+  <h2>Qué hay aquí</h2>
+  <ol>
+    <li><strong>Cómo funciona</strong> — el resumen en una página.</li>
+    <li><strong>Lo que ve el público</strong> — apartar el boleto y recibir los QR.</li>
+    <li><strong>Taquilla</strong> — cobrar y validar en la puerta. Esta es la parte que hay que leer antes del evento.</li>
+    <li><strong>Administración</strong> — precios, cupo y dar de alta al personal.</li>
+    <li><strong>Subir al servidor</strong> — para Rafa. Pasos y configuración.</li>
+    <li><strong>Lo que puede salir mal</strong> — problemas concretos y cómo se arreglan.</li>
+    <li><strong>Cuentas y contraseñas</strong>.</li>
+    <li><strong>Checklist del día del evento</strong>.</li>
+  </ol>
+
+  <h3>En una frase</h3>
+  <p>
+    La gente aparta su lugar en el sitio sin pagar nada en línea, recibe por correo un QR por
+    cada acceso, y en la puerta se le cobra y se le escanea. Cada QR sirve una sola vez.
+  </p>
+</section>
+
+<section>
+  <h2>1 · Cómo funciona</h2>
+
+  <div class="paso"><div class="n">1</div><div class="t">
+    <strong>El asistente aparta</strong>
+    Entra a la página, elige el evento, pone su nombre y correo, elige acceso general o barra
+    libre y cuántos quiere. Máximo 2 por persona.
+  </div></div>
+
+  <div class="paso"><div class="n">2</div><div class="t">
+    <strong>Recibe su boleto por correo</strong>
+    Le llega un correo con un código QR por cada acceso y un código de seguimiento
+    (<code>SR-XXXXXXXX</code>) con el que puede ver su reserva en el sitio cuando quiera.
+  </div></div>
+
+  <div class="paso"><div class="n">3</div><div class="t">
+    <strong>Paga en la puerta</strong>
+    No se cobra nada en línea. En taquilla se le cobra y el personal marca la reserva como
+    pagada en el sistema.
+  </div></div>
+
+  <div class="paso"><div class="n">4</div><div class="t">
+    <strong>Se escanea su QR y entra</strong>
+    El sistema comprueba que esté pagado y que ese código no se haya usado antes. Si todo
+    está bien, pasa.
+  </div></div>
+
+  <div class="box">
+    <h3>Las reglas que el sistema hace cumplir solo</h3>
+    <ul>
+      <li>Nadie puede apartar más de 2 accesos con el mismo correo.</li>
+      <li>Nadie entra sin que alguien haya marcado su pago.</li>
+      <li>Un QR sirve <strong>una sola vez</strong>. Si lo reenvía a un amigo, el segundo no entra.</li>
+      <li>Si el evento tiene cupo, deja de venderse al llenarse, aunque mil personas aparten al mismo tiempo.</li>
+      <li>Todo cobro queda registrado con el nombre de quien lo hizo y la hora.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>2 · Lo que ve el público</h2>
+
+  <figure>
+    <img src="capturas/01-apartar.png" alt="Página para apartar boleto" />
+    <figcaption>La página de boletos. El aviso de que no se paga en línea va arriba de todo, para que nadie llegue confundido a la puerta.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="capturas/02-formulario.png" alt="Formulario de reserva" />
+    <figcaption>Sólo pide nombre y correo. Debajo se elige el tipo de acceso, con su precio, y la cantidad.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="capturas/08-correo.png" alt="Correo con los boletos" />
+    <figcaption>El correo que recibe. Los QR van dentro del mensaje y además adjuntos como imagen, por si su correo bloquea imágenes.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="capturas/03-boleto.png" alt="Página de seguimiento de la reserva" />
+    <figcaption>Con su código de seguimiento puede abrir esta página cuando quiera: ahí están sus QR y si ya pagó o no.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>3 · Taquilla</h2>
+
+  <p>
+    Esta es la parte que el personal de la puerta tiene que conocer. Se entra desde el círculo
+    con la inicial, arriba a la derecha, opción <strong>Taquilla</strong>.
+  </p>
+
+  <figure>
+    <img src="capturas/04-taquilla.png" alt="Pantalla de taquilla" />
+    <figcaption>Arriba los contadores en vivo (apartados, pagados, adentro y dinero cobrado). En medio la validación. Abajo la lista de reservas.</figcaption>
+  </figure>
+
+  <h3>Cada persona que llega</h3>
+  <div class="paso"><div class="n">1</div><div class="t">
+    <strong>Escanear</strong>
+    Botón <em>Escanear QR</em> y apuntar la cámara. Si no lee, se teclea el código de 16
+    caracteres que viene debajo del QR.
+  </div></div>
+  <div class="paso"><div class="n">2</div><div class="t">
+    <strong>Mirar el color</strong>
+    Amarillo = falta cobrar. Verde = ya pagó. Rojo = algo está mal, no pasa.
+  </div></div>
+  <div class="paso"><div class="n">3</div><div class="t">
+    <strong>Cobrar y dejar pasar</strong>
+    Si falta pagar, se cobra y se toca <em>Cobrar → marcar pagado</em>. Luego <em>Dar acceso</em>.
+  </div></div>
+  <div class="paso"><div class="n">4</div><div class="t">
+    <strong>Siguiente</strong>
+    El botón <em>Escanear siguiente</em> vuelve directo a la cámara.
+  </div></div>
+
+  <figure>
+    <img src="capturas/05-sin-pagar.png" alt="Boleto sin pagar" />
+    <figcaption><span class="tag amarillo">No pagado</span> &nbsp; El botón "Dar acceso" está apagado. Primero se cobra el monto que dice el botón amarillo.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="capturas/06-acceso-concedido.png" alt="Acceso concedido" />
+    <figcaption><span class="tag verde">Acceso concedido</span> &nbsp; Puede pasar. El recuadro de color dice qué pulsera ponerle: azul general, morado barra libre.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="capturas/07-ya-usado.png" alt="Boleto ya usado" />
+    <figcaption><span class="tag rojo">Ya fue usado</span> &nbsp; Ese QR ya entró. Dice a qué hora y quién lo validó. No dejarlo pasar y avisar al coordinador.</figcaption>
+  </figure>
+
+  <h3>Qué significa cada pantalla</h3>
+  <table>
+    <tr><th>Lo que ves</th><th>Qué pasó</th><th>Qué hacés</th></tr>
+    <tr><td><strong>No pagado</strong> (amarillo)</td><td>Apartó pero no ha pagado</td><td>Cobrás, tocás "Cobrar → marcar pagado", confirmás y luego "Dar acceso"</td></tr>
+    <tr><td><strong>Acceso concedido</strong> (verde)</td><td>Entró correctamente</td><td>Pulsera según el color y siguiente</td></tr>
+    <tr><td><strong>Ya fue usado</strong> (rojo)</td><td>Ese QR ya entró antes</td><td>No pasa. La pantalla dice la hora y quién lo validó</td></tr>
+    <tr><td><strong>Otro evento</strong> (rojo)</td><td>Boleto de otra fecha</td><td>No pasa</td></tr>
+    <tr><td><strong>Código inválido</strong> (rojo)</td><td>El código no existe</td><td>Buscarlo por nombre en la lista de abajo</td></tr>
+  </table>
+
+  <h3>Casos que van a pasar</h3>
+  <table>
+    <tr><th>Situación</th><th>Solución</th></tr>
+    <tr><td>Perdió el correo o se quedó sin batería</td><td>Buscarlo por nombre o correo en la lista, pedir identificación y usar "Dar acceso" desde su ficha</td></tr>
+    <tr><td>Dice que nunca le llegó el correo</td><td>En su ficha se ve el estado del correo. Botón "Reenviar correo", o dictarle su código de seguimiento</td></tr>
+    <tr><td>Llegan dos con una sola reserva</td><td>El pago cubre los dos accesos, pero cada QR se escanea por separado</td></tr>
+    <tr><td>Se marcó pagado por error</td><td>Abrir la ficha y usar "Corregir: marcar NO pagado". Queda en el historial</td></tr>
+    <tr><td>Discute que ya pagó</td><td>Abrir su ficha y mirar el Historial: dice quién cobró y a qué hora</td></tr>
+    <tr><td>Se cae el internet</td><td>Usar la lista impresa y marcar a mano. Después se captura en el sistema</td></tr>
+  </table>
+
+  <div class="box ojo">
+    <h3>Antes de abrir la puerta</h3>
+    <ul>
+      <li>Celulares cargados y con batería externa a la mano.</li>
+      <li><strong>Imprimir la lista de respaldo</strong>: botón "Descargar lista" en Taquilla. Sin internet, esa hoja es lo único que queda.</li>
+      <li>Comprobar arriba que el evento seleccionado es el correcto.</li>
+      <li>Al cerrar, la sección <strong>Corte de caja</strong> dice cuánto entrega cada quien.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>4 · Administración</h2>
+
+  <figure>
+    <img src="capturas/09-eventos.png" alt="Administración de eventos" />
+    <figcaption>En Eventos → Editar se activa "Permitir apartar boletos" y se definen precio y cupo de cada tipo de acceso. Cupo vacío = sin límite.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="capturas/10-usuarios.png" alt="Administración de usuarios" />
+    <figcaption>En Usuarios se cambia el rol de cada persona.</figcaption>
+  </figure>
+
+  <h3>Los tres roles</h3>
+  <table>
+    <tr><th>Rol</th><th>Qué puede hacer</th></tr>
+    <tr><td><strong>Usuario</strong></td><td>Comprar en la tienda. Nada de administración</td></tr>
+    <tr><td><strong>Taquilla</strong></td><td>Cobrar, validar accesos y reenviar correos. No puede cancelar reservas, ni tocar productos, usuarios ni precios</td></tr>
+    <tr><td><strong>Admin</strong></td><td>Todo, incluido cancelar reservas, descargar la lista y cambiar roles</td></tr>
+  </table>
+
+  <p>
+    Para dar de alta a alguien de la puerta: que se registre en el sitio como cualquier usuario,
+    y luego en <strong>Usuarios</strong> se le cambia el rol a <strong>Taquilla</strong>. Tiene que
+    cerrar sesión y volver a entrar para que le aparezca.
+  </p>
+</section>
+
+<section>
+  <h2>5 · Subir al servidor</h2>
+  <p>Esta sección es para quien haga el despliegue.</p>
+
+  <h3>Hace falta</h3>
+  <ul>
+    <li>Un servidor con Docker y Docker Compose. Con 2 GB de RAM alcanza.</li>
+    <li>Un dominio apuntando (registro A) a la IP del servidor.</li>
+    <li>Puertos 80 y 443 abiertos.</li>
+    <li>Una cuenta de Resend para los correos.</li>
+  </ul>
+
+  <div class="box alerta">
+    <h3>El certificado HTTPS no es opcional</h3>
+    <p style="margin:0">
+      Los navegadores sólo dan acceso a la cámara en sitios con HTTPS. Sin certificado, el
+      escáner de taquilla no abre la cámara. La configuración incluida (Caddy) lo saca solo.
+    </p>
+  </div>
+
+  <h3>Pasos</h3>
+  <pre>git clone https://github.com/RafaH2K/signal33.git
+cd signal33
+cp .env.example .env
+nano .env                 # ver la tabla de abajo
+
+cd frontend &amp;&amp; npm install &amp;&amp; npm run build &amp;&amp; cd ..
+docker compose up -d --build
+
+curl https://tu-dominio.com/api/health   # debe responder {"success":true,...}</pre>
+
+  <p>Las migraciones de la base de datos se aplican solas al levantar.</p>
+
+  <h3>Lo que hay que poner en <code>.env</code></h3>
+  <table>
+    <tr><th>Variable</th><th>Valor</th></tr>
+    <tr><td><code>APP_URL</code></td><td><code>https://tu-dominio.com</code> — de aquí salen los enlaces de los QR</td></tr>
+    <tr><td><code>FRONTEND_URL</code></td><td><code>https://tu-dominio.com</code></td></tr>
+    <tr><td><code>SITE_DOMAIN</code></td><td><code>tu-dominio.com</code> — lo usa Caddy para el certificado</td></tr>
+    <tr><td><code>CORS_ALLOWED_ORIGINS</code></td><td><code>https://tu-dominio.com</code></td></tr>
+    <tr><td><code>DATABASE_PASSWORD</code></td><td>Una contraseña larga y nueva</td></tr>
+    <tr><td><code>JWT_ACCESS_SECRET</code><br /><code>JWT_REFRESH_SECRET</code></td><td>Generar cada uno con <code>openssl rand -hex 48</code></td></tr>
+    <tr><td><code>RESEND_API_KEY</code></td><td>La clave de la cuenta de Resend</td></tr>
+    <tr><td><code>RESEND_FROM_EMAIL</code></td><td><code>SIGNAL33 &lt;signal@findyourfrequency.com&gt;</code></td></tr>
+    <tr><td><code>EMAIL_QUEUE_CONCURRENCY</code></td><td><code>2</code> con plan gratuito; más alto con plan de pago</td></tr>
+  </table>
+
+  <h3>Correos: verificar el dominio</h3>
+  <p>
+    Para enviar desde <code>signal@findyourfrequency.com</code>: en Resend, <em>Domains → Add
+    Domain</em>, y copiar los registros DNS que da (SPF, DKIM y DMARC) al panel donde se compró
+    el dominio. Hasta que diga <em>Verified</em>, sólo se puede enviar al correo del titular de
+    la cuenta.
+  </p>
+  <p>
+    El plan gratuito manda unos 100 correos al día. <strong>Para miles de asistentes hace falta
+    plan de pago</strong>, o los correos se van acumulando en la cola.
+  </p>
+
+  <h3>Respaldos</h3>
+  <p>Sin esto, una falla del servidor se lleva todas las reservas. Programar en cron:</p>
+  <pre>0 * * * * cd /ruta/signal33 &amp;&amp; ./scripts/backup-db.sh &gt;&gt; backups/backup.log 2&gt;&amp;1</pre>
+  <p>Restaurar: <code>gunzip -c backups/signal33-XXXX.sql.gz | docker compose exec -T db psql -U postgres -d signal33</code></p>
+
+  <h3>Actualizar después de un cambio</h3>
+  <pre>git pull
+cd frontend &amp;&amp; npm run build &amp;&amp; cd ..
+docker compose up -d --build</pre>
+</section>
+
+<section>
+  <h2>6 · Lo que puede salir mal</h2>
+  <p>Problemas reales, con su causa y su arreglo.</p>
+
+  <h3>Al subirlo</h3>
+  <table>
+    <tr><th>Síntoma</th><th>Causa</th><th>Arreglo</th></tr>
+    <tr>
+      <td>El escáner no abre la cámara</td>
+      <td>El sitio no está en HTTPS, o el navegador no tiene permiso de cámara</td>
+      <td>Comprobar el certificado. En el candado del navegador, dar permiso de cámara al sitio</td>
+    </tr>
+    <tr>
+      <td>Los QR llevan a <code>localhost</code></td>
+      <td><code>APP_URL</code> o <code>FRONTEND_URL</code> quedaron con el valor de desarrollo</td>
+      <td>Corregir el <code>.env</code>, relevantar y reenviar los correos afectados</td>
+    </tr>
+    <tr>
+      <td>No sale el certificado</td>
+      <td>El dominio no apunta al servidor todavía, o los puertos 80/443 están cerrados</td>
+      <td>Comprobar el registro A y el firewall. Caddy reintenta solo</td>
+    </tr>
+    <tr>
+      <td>El sitio carga pero todo da error</td>
+      <td><code>CORS_ALLOWED_ORIGINS</code> no incluye el dominio real</td>
+      <td>Agregarlo tal cual, con <code>https://</code> y sin barra final</td>
+    </tr>
+    <tr>
+      <td>La API no levanta</td>
+      <td>Falta una variable obligatoria en <code>.env</code></td>
+      <td><code>docker compose logs api</code> dice cuál falta por su nombre</td>
+    </tr>
+    <tr>
+      <td>Error de conexión a la base</td>
+      <td><code>DATABASE_HOST</code> con otro valor</td>
+      <td>Dentro de compose tiene que ser <code>db</code>, no <code>localhost</code></td>
+    </tr>
+    <tr>
+      <td>No llegan los correos</td>
+      <td>Dominio sin verificar, o se acabó el límite diario</td>
+      <td>Verificar el dominio; revisar el panel de Resend. La cola reintenta sola</td>
+    </tr>
+    <tr>
+      <td>Los correos caen en spam</td>
+      <td>Falta SPF/DKIM/DMARC</td>
+      <td>Verificar el dominio en Resend y esperar a que propague el DNS</td>
+    </tr>
+  </table>
+
+  <h3>Durante la venta</h3>
+  <table>
+    <tr><th>Síntoma</th><th>Causa</th><th>Arreglo</th></tr>
+    <tr>
+      <td>"Demasiadas reservas desde esta conexión"</td>
+      <td>Límite de 60 por hora por conexión. Varias personas comparten salida a internet</td>
+      <td>Subir el límite en <code>src/middlewares/rateLimit.js</code> y volver a desplegar</td>
+    </tr>
+    <tr>
+      <td>Se agotó y todavía hay lugar</td>
+      <td>El cupo del evento está mal configurado</td>
+      <td>Eventos → Editar → cupo. Vacío = sin límite</td>
+    </tr>
+    <tr>
+      <td>Los correos tardan</td>
+      <td>La cola envía al ritmo que permite el plan de Resend</td>
+      <td>Subir <code>EMAIL_QUEUE_CONCURRENCY</code> tras pasar a plan de pago</td>
+    </tr>
+  </table>
+
+  <h3>La noche del evento</h3>
+  <table>
+    <tr><th>Síntoma</th><th>Causa</th><th>Arreglo</th></tr>
+    <tr>
+      <td>La cámara no lee un QR</td>
+      <td>Brillo bajo, pantalla rayada o mica</td>
+      <td>Pedir que suban el brillo; si no, teclear el código de 16 caracteres</td>
+    </tr>
+    <tr>
+      <td>Se cae el internet del lugar</td>
+      <td>La red del venue se satura cuando se llena</td>
+      <td><strong>La lista impresa.</strong> Marcar a mano y capturar después</td>
+    </tr>
+    <tr>
+      <td>"Demasiadas operaciones seguidas"</td>
+      <td>Límite de 240 por minuto por persona de taquilla</td>
+      <td>Esperar unos segundos. Si pasa seguido, abrir otra taquilla con otra cuenta</td>
+    </tr>
+    <tr>
+      <td>Alguien aparece como que ya entró y jura que no</td>
+      <td>Alguien más usó su QR, o se escaneó dos veces</td>
+      <td>El Historial de su ficha dice hora y quién validó. Decide el coordinador</td>
+    </tr>
+    <tr>
+      <td>Se fue la luz / se apagó el celular</td>
+      <td>—</td>
+      <td>Otro celular con la misma cuenta ve lo mismo al instante. Nada se pierde</td>
+    </tr>
+  </table>
+
+  <div class="box alerta">
+    <h3>Lo que todavía no está probado</h3>
+    <ul>
+      <li>El sistema <strong>nunca ha corrido en un servidor real</strong>, sólo en la computadora de desarrollo.</li>
+      <li>La prueba de carga (10 000 reservas sin errores) se hizo en una laptop, no en el servidor definitivo. <strong>Hay que repetirla ahí.</strong></li>
+      <li>El escaneo se probó con un solo celular. Conviene probar con varios, sobre todo iPhone y Android viejos.</li>
+      <li>Si se usa más de una instancia del servidor, los límites por conexión se cuentan por separado en cada una.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>7 · Cuentas</h2>
+
+  <div class="box ojo">
+    <h3>Cuenta de administrador</h3>
+    <p style="margin:0">
+      Usuario: <code>rafaelmoraliza11@gmail.com</code><br />
+      Contraseña: <em>se entrega aparte, no se comparte en este documento</em>
+    </p>
+  </div>
+
+  <p>
+    <strong>Al subirlo al servidor, la base arranca vacía</strong>: no hay usuarios. El primero se
+    crea registrándose en el sitio como cualquier persona, y luego se le da el rol de admin
+    directamente en la base de datos:
+  </p>
+  <pre>docker compose exec db psql -U postgres -d signal33 \
+  -c "UPDATE users SET role='ADMIN' WHERE email='tu-correo@ejemplo.com';"</pre>
+
+  <p>De ahí en adelante, el resto de los roles se cambian desde <strong>Admin → Usuarios</strong>.</p>
+
+  <div class="box alerta">
+    <h3>Seguridad</h3>
+    <ul style="margin-bottom:0">
+      <li>Cambiar la contraseña de admin después del despliegue, desde Perfil.</li>
+      <li>Al personal de la puerta se le da rol <strong>Taquilla</strong>, nunca la cuenta de admin.</li>
+      <li>Cada quien con su cuenta: los cobros quedan registrados a nombre de quien los hace.</li>
+      <li>El archivo <code>.env</code> tiene todas las claves y <strong>no se sube a GitHub</strong>. No pasarlo por chat.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>8 · Checklist del día</h2>
+
+  <h3>Una semana antes</h3>
+  <ul>
+    <li>Precios y cupo cargados en el evento.</li>
+    <li>Dominio verificado en Resend y plan acorde a la cantidad de asistentes.</li>
+    <li>Respaldos automáticos corriendo.</li>
+    <li>Prueba de carga hecha contra el servidor real.</li>
+    <li>Personal de taquilla dado de alta con rol Taquilla, y que cada quien entre una vez para probar.</li>
+  </ul>
+
+  <h3>El día anterior</h3>
+  <ul>
+    <li>Imprimir la lista de reservas (botón "Descargar lista").</li>
+    <li>Ensayo con el personal: apartar un boleto de prueba, cobrarlo y escanearlo.</li>
+    <li>Baterías externas cargadas.</li>
+  </ul>
+
+  <h3>Al abrir</h3>
+  <ul>
+    <li>Cada quien entra con su cuenta y comprueba que el evento seleccionado es el correcto.</li>
+    <li>Probar un escaneo real antes de que llegue la fila.</li>
+  </ul>
+
+  <h3>Al cerrar</h3>
+  <ul>
+    <li>Corte de caja: cada quien entrega lo que dice la tabla.</li>
+    <li>Descargar la lista final como respaldo.</li>
+  </ul>
+</section>
+
+</body>
+</html>
