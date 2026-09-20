@@ -16,7 +16,7 @@ export default function Store() {
 
   return (
     <main className="mx-auto max-w-7xl px-6 pb-24 pt-32">
-      <h1 className="mb-16 text-center font-display text-2xl uppercase tracking-wide-caps">Shop</h1>
+      <h1 className="mb-16 text-center font-brand text-2xl">Shop</h1>
 
       {products === null ? (
         <ProductGridSkeleton />

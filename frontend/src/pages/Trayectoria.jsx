@@ -37,10 +37,15 @@ export default function Trayectoria() {
 
   return (
     <main className="px-6 pb-24 pt-32">
-      {/* TODO: fotografía principal del DJ. Placeholder hasta subir una imagen real vía Uploads. */}
-      <div className="mx-auto mb-20 aspect-[16/9] max-w-4xl bg-[radial-gradient(circle_at_center,rgba(46,94,255,0.06),transparent_60%)]" />
+      <img
+        src="/media/hero-3.webp"
+        alt="DJ de perfil mirando hacia un lado"
+        width={1920}
+        height={1442}
+        className="mx-auto mb-20 aspect-[16/9] w-full max-w-4xl object-cover object-[50%_30%]"
+      />
 
-      <h1 className="mb-16 text-center font-display text-2xl uppercase tracking-wide-caps">Trayectoria</h1>
+      <h1 className="mb-16 text-center font-brand text-2xl">Trayectoria</h1>
 
       {!hasContent && <p className="text-center text-sm text-mist">Contenido próximamente.</p>}
 

@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { signalApi } from '../api/resources.js';
 import SignalEffectOverlay from '../components/SignalEffectOverlay.jsx';
 
-const INTRO = 'signal33 // sistema listo. escribí un comando.';
+const INTRO = 'signal33 // sistema listo. escribe un comando.';
 
 export default function Signal() {
   const [log, setLog] = useState([{ type: 'response', text: INTRO }]);
@@ -31,7 +31,7 @@ export default function Signal() {
     setValue('');
 
     if (command.toLowerCase() === 'help' || command.toLowerCase() === 'ayuda') {
-      push({ type: 'response', text: 'escribí cualquier palabra. algunas abren puertas, la mayoría no.' });
+      push({ type: 'response', text: 'escribe cualquier palabra. algunas abren puertas, la mayoría no.' });
       return;
     }
     if (command.toLowerCase() === 'clear' || command.toLowerCase() === 'limpiar') {

@@ -68,7 +68,7 @@ export async function createReservation({ eventId, fullName, email, accessType, 
     throw new AppError(
       remaining === 0
         ? `Ya apartaste el máximo de ${limit} accesos con este correo`
-        : `Con este correo sólo podés apartar ${remaining} acceso(s) más`,
+        : `Con este correo sólo puedes apartar ${remaining} acceso(s) más`,
       409
     );
   }
@@ -123,7 +123,7 @@ export async function getTicketByCode(code) {
 
 export async function checkInTicket(code, userId) {
   const ticket = await getTicketByCode(code);
-  if (!ticket.is_paid) throw new AppError('No está pagado: cobrá antes de dejar pasar', 409);
+  if (!ticket.is_paid) throw new AppError('No está pagado: cobra antes de dejar pasar', 409);
   if (ticket.checked_in_at) throw new AppError('Este acceso ya fue usado', 409);
 
   const checkedIn = await reservationRepository.checkInTicket(code, userId);
@@ -156,7 +156,7 @@ export async function resendEmail(id, userId) {
   const reservation = await getActiveReservation(id);
   const tickets = await reservationRepository.findTickets(id);
   const sent = await sendEmail(reservation, tickets);
-  if (!sent) throw new AppError('No se pudo enviar el correo, revisá la configuración de Resend', 502);
+  if (!sent) throw new AppError('No se pudo enviar el correo, revisa la configuración de Resend', 502);
   await reservationRepository.logAction(id, 'EMAIL_RESENT', userId);
   return { sent: true };
 }

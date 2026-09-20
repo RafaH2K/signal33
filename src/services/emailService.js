@@ -7,7 +7,7 @@ export async function sendPasswordResetEmail(to, resetUrl) {
     from: env.resend.fromEmail,
     to,
     subject: 'Recuperación de contraseña',
-    html: `<p>Solicitaste restablecer tu contraseña.</p><p><a href="${resetUrl}">Hacé clic acá para elegir una nueva</a> (expira en 1 hora).</p><p>Si no fuiste vos, ignorá este correo.</p>`,
+    html: `<p>Solicitaste restablecer tu contraseña.</p><p><a href="${resetUrl}">Haz clic aquí para elegir una nueva</a> (expira en 1 hora).</p><p>Si no fuiste tú, ignora este correo.</p>`,
   });
 
   if (error) logger.error({ error }, 'Failed to send password reset email');
@@ -64,7 +64,7 @@ export async function sendReservationEmail({ reservation, tickets }) {
         <p>Hola ${escapeHtml(reservation.full_name)}, tu lugar está apartado.</p>
         <p style="background:#fff4e5;border-left:4px solid #f59e0b;padding:12px 16px;margin:16px 0">
           <strong>El pago se realiza en taquilla${amountText}.</strong> No se cobra nada en línea:
-          presentá este correo en la entrada, pagá ahí y tu acceso queda liberado.
+          presenta este correo en la entrada, paga ahí y tu acceso queda liberado.
         </p>
         ${ticketBlocks}
         <p>Código de seguimiento: <strong style="font-family:monospace">${reservation.tracking_code}</strong></p>

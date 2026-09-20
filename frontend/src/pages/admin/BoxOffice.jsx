@@ -162,7 +162,7 @@ export default function BoxOffice() {
               <input
                 value={manualCode}
                 onChange={(e) => setManualCode(e.target.value)}
-                placeholder="o escribí el código de 16 caracteres"
+                placeholder="o escribe el código de 16 caracteres"
                 className="min-w-0 flex-1 border border-line-strong bg-transparent px-4 py-3 font-mono text-sm uppercase text-paper outline-none placeholder:normal-case placeholder:text-mist-dim focus:border-signal"
               />
               <button type="submit" className="border border-line-strong px-4 text-xs uppercase tracking-wide-caps text-mist hover:text-paper">
@@ -205,7 +205,7 @@ export default function BoxOffice() {
         </div>
         {exportError && <p className="mb-3 text-xs text-signal-glow">{exportError}</p>}
         <p className="mb-4 text-xs text-mist-dim">
-          ¿Alguien perdió su QR o se quedó sin batería? Buscalo por nombre o correo, pedile identificación y validalo desde acá.
+          ¿Alguien perdió su QR o se quedó sin batería? Búscalo por nombre o correo, pídele identificación y valídalo desde aquí.
         </p>
 
         {reservations === null ? (
@@ -367,13 +367,13 @@ function ReservationDetail({ id, canCancel, onChanged, onClose }) {
     const r = reservation;
     const question = r.is_paid
       ? `¿Marcar como NO pagada la reserva de ${r.full_name}? Usalo sólo para corregir un error.`
-      : `¿Confirmás que cobraste ${formatMoney(r.amount_due)} a ${r.full_name}?`;
+      : `¿Confirmas que cobraste ${formatMoney(r.amount_due)} a ${r.full_name}?`;
     if (!confirm(question)) return;
     run(() => reservationsApi.setPaid(r.id, !r.is_paid));
   }
 
   function checkIn(ticket) {
-    if (!confirm(`¿Dar acceso a ${reservation.full_name}? Verificá su identificación.`)) return;
+    if (!confirm(`¿Dar acceso a ${reservation.full_name}? Verifica su identificación.`)) return;
     run(() => reservationsApi.checkIn(ticket.code));
   }
 
@@ -444,7 +444,7 @@ function ReservationDetail({ id, canCancel, onChanged, onClose }) {
                   type="button"
                   onClick={() => checkIn(ticket)}
                   disabled={busy || !reservation.is_paid}
-                  title={reservation.is_paid ? '' : 'Primero cobrá'}
+                  title={reservation.is_paid ? '' : 'Primero cobra'}
                   className="bg-paper px-3 py-1.5 font-display text-[10px] uppercase tracking-wide-caps text-ink disabled:opacity-30"
                 >
                   Dar acceso

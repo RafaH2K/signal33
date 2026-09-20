@@ -3,3 +3,4 @@ node_modules/
 src/logs/*.log
 src/uploads/*
 !src/uploads/.gitkeep
+medios para la web/

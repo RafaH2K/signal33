@@ -21,7 +21,7 @@ export default function Orders() {
 
   return (
     <main className="mx-auto max-w-3xl px-6 pb-24 pt-32">
-      <h1 className="mb-16 text-center font-display text-2xl uppercase tracking-wide-caps">Mis pedidos</h1>
+      <h1 className="mb-16 text-center font-brand text-2xl">Mis pedidos</h1>
 
       {orders === null ? (
         <p className="text-center text-sm text-mist">Cargando...</p>

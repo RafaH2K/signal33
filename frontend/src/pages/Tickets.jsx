@@ -76,13 +76,19 @@ export default function Tickets() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-6 pb-24 pt-32">
-      <h1 className="mb-4 text-center font-display text-2xl uppercase tracking-wide-caps">Apartar boleto</h1>
+    <>
+    <header className="relative isolate flex h-72 items-end overflow-hidden px-6 pb-10 md:h-96">
+      <img src="/media/hero-6.webp" alt="" width={1920} height={1442} className="absolute inset-0 -z-10 h-full w-full object-cover object-[50%_8%]" />
+      {/* velo: oscuro arriba (navbar transparente) y funde a negro abajo */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ink via-ink/55 to-ink/85" />
+      <h1 className="mx-auto w-full max-w-2xl font-brand text-2xl md:text-3xl">Apartar boleto</h1>
+    </header>
+    <main className="mx-auto max-w-2xl px-6 pb-24 pt-10">
 
       <p className="mb-12 border border-signal/60 px-5 py-4 text-center text-sm text-paper">
         <strong className="font-display uppercase tracking-wide-caps">No se paga nada en línea.</strong>
         <br />
-        Apartá tu lugar acá y pagá en taquilla el día del evento.
+        Aparta tu lugar aquí y paga en taquilla el día del evento.
       </p>
 
       {events === null ? (
@@ -92,7 +98,7 @@ export default function Tickets() {
       ) : (
         <>
           <section className="mb-10">
-            <h2 className="mb-4 text-xs uppercase tracking-wide-caps text-mist">1 · Elegí el evento</h2>
+            <h2 className="mb-4 text-xs uppercase tracking-wide-caps text-mist">1 · Elige el evento</h2>
             <ul className="divide-y divide-line border-y border-line">
               {events.map((event) => (
                 <li key={event.id}>
@@ -228,7 +234,7 @@ export default function Tickets() {
 
       <form onSubmit={handleTrack} className="mt-20 flex flex-col gap-3 border-t border-line pt-10 sm:flex-row sm:items-end">
         <Field
-          label="¿Ya apartaste? Consultá tu reserva"
+          label="¿Ya apartaste? Consulta tu reserva"
           placeholder="SR-XXXXXXXX"
           value={trackCode}
           onChange={(e) => setTrackCode(e.target.value)}
@@ -242,5 +248,6 @@ export default function Tickets() {
         </button>
       </form>
     </main>
+    </>
   );
 }

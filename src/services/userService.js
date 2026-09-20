@@ -55,7 +55,7 @@ export async function deleteUser(id) {
 
 export async function updateRole(id, role, requesterId) {
   // un admin quitándose el rol a sí mismo puede dejar el sitio sin admins
-  if (id === requesterId && role !== 'ADMIN') throw new AppError('No podés quitarte tu propio rol de admin', 400);
+  if (id === requesterId && role !== 'ADMIN') throw new AppError('No puedes quitarte tu propio rol de admin', 400);
   const user = await userRepository.updateRole(id, role);
   if (!user) throw new AppError('Usuario no encontrado', 404);
   return sanitize(user);

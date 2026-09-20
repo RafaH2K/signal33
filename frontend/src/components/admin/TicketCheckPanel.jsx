@@ -20,7 +20,7 @@ export default function TicketCheckPanel({ code, expectedEventId, onDone }) {
   }, [code]);
 
   async function markPaid() {
-    if (!confirm(`¿Confirmás que cobraste ${formatMoney(ticket.amount_due)} a ${ticket.full_name}?`)) return;
+    if (!confirm(`¿Confirmas que cobraste ${formatMoney(ticket.amount_due)} a ${ticket.full_name}?`)) return;
     setBusy(true);
     try {
       await reservationsApi.setPaid(ticket.reservation_id, true);

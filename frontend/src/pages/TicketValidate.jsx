@@ -14,12 +14,12 @@ export default function TicketValidate() {
   if (!isStaff) {
     return (
       <main className="mx-auto max-w-md px-6 pb-24 pt-32 text-center">
-        <h1 className="mb-4 font-display text-xl uppercase tracking-wide-caps">Acceso</h1>
+        <h1 className="mb-4 font-brand text-xl">Acceso</h1>
         <p className="mb-2 font-mono text-sm tracking-widest">{code}</p>
         <p className="mb-8 text-sm text-mist">
-          Presentá este código QR en taquilla. Ahí se realiza el pago y se valida tu entrada.
+          Presenta este código QR en taquilla. Ahí se realiza el pago y se valida tu entrada.
         </p>
-        {!user && <p className="text-xs text-mist-dim">¿Sos del staff? Iniciá sesión con tu cuenta y volvé a escanear.</p>}
+        {!user && <p className="text-xs text-mist-dim">¿Sos del staff? Inicia sesión con tu cuenta y volvé a escanear.</p>}
         <Link to="/boletos" className="mt-6 inline-block text-xs uppercase tracking-wide-caps text-signal-glow">
           Ir a boletos
         </Link>
@@ -29,7 +29,7 @@ export default function TicketValidate() {
 
   return (
     <main className="mx-auto max-w-md px-6 pb-24 pt-32">
-      <h1 className="mb-8 text-center font-display text-xl uppercase tracking-wide-caps">Validar acceso</h1>
+      <h1 className="mb-8 text-center font-brand text-xl">Validar acceso</h1>
       <TicketCheckPanel key={code} code={code.toUpperCase()} />
       <Link to={isAdmin ? '/admin/taquilla' : '/taquilla'} className="mt-10 block text-center text-xs uppercase tracking-wide-caps text-mist hover:text-paper">
         Abrir escáner de taquilla

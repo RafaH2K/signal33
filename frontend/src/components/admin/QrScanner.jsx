@@ -19,7 +19,7 @@ export default function QrScanner({ onScan }) {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
       } catch {
-        setCameraError('No se pudo abrir la cámara. Revisá los permisos o ingresá el código a mano.');
+        setCameraError('No se pudo abrir la cámara. Revisa los permisos o ingresa el código a mano.');
         return;
       }
       if (stopped) return stream.getTracks().forEach((t) => t.stop());

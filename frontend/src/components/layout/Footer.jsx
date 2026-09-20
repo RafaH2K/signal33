@@ -1,19 +1,18 @@
 import Logo from '../Logo.jsx';
 
-// TODO: reemplazar "#" por los perfiles reales una vez estén disponibles.
 const SOCIALS = [
-  { slug: 'spotify', label: 'Spotify', href: '#' },
-  { slug: 'applemusic', label: 'Apple Music', href: '#' },
-  { slug: 'youtube', label: 'YouTube', href: '#' },
-  { slug: 'instagram', label: 'Instagram', href: '#' },
-  { slug: 'tiktok', label: 'TikTok', href: '#' },
+  { slug: 'soundcloud', label: 'SoundCloud', href: 'https://on.soundcloud.com/DE2a6pEuFymCy0tfZc' },
+  { slug: 'youtube', label: 'YouTube', href: 'https://www.youtube.com/@Sign4l-33' },
+  { slug: 'instagram', label: 'Instagram', href: 'https://www.instagram.com/dj.signal33' },
+  { slug: 'tiktok', label: 'TikTok', href: 'https://www.tiktok.com/@dj_signal33' },
+  { slug: 'linktree', label: 'Linktree', href: 'https://linktr.ee/Signal.33' },
 ];
 
 export default function Footer() {
   return (
     <footer className="border-t border-line px-6 py-16">
       <div className="mx-auto flex max-w-7xl flex-col items-center gap-10 text-center">
-        <Logo />
+        <Logo variant="vertical" />
 
         <div className="flex items-center gap-6">
           {SOCIALS.map((social) => (
@@ -30,8 +29,8 @@ export default function Footer() {
           ))}
         </div>
 
-        <a href="mailto:contacto@signal33.com" className="text-sm text-mist transition hover:text-paper">
-          contacto@signal33.com
+        <a href="mailto:signal-33@findyourfrequency.com.mx" className="text-sm text-mist transition hover:text-paper">
+          signal-33@findyourfrequency.com.mx
         </a>
 
         <p className="text-xs text-mist-dim">© {new Date().getFullYear()} signal33. Todos los derechos reservados.</p>

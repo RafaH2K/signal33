@@ -34,12 +34,12 @@ export default function TicketStatus() {
     <main className="mx-auto max-w-xl px-6 pb-24 pt-32">
       {state?.justCreated && (
         <p className="mb-8 border border-emerald-600/60 px-5 py-4 text-center text-sm">
-          ¡Listo! Te mandamos tus accesos a <strong>{reservation.email}</strong>. Guardá también esta página.
+          ¡Listo! Te mandamos tus accesos a <strong>{reservation.email}</strong>. Guarda también esta página.
         </p>
       )}
 
       <header className="mb-10 text-center">
-        <h1 className="font-display text-2xl uppercase tracking-wide-caps">{reservation.event_title}</h1>
+        <h1 className="break-words font-brand text-xl md:text-2xl">{reservation.event_title}</h1>
         <p className="mt-2 text-xs text-mist-dim">
           {new Date(reservation.event_date).toLocaleString('es-MX', { dateStyle: 'full', timeStyle: 'short' })} ·{' '}
           {reservation.venue}
@@ -69,7 +69,7 @@ export default function TicketStatus() {
 
       {!reservation.is_paid && (
         <p className="mb-10 text-center text-sm text-mist">
-          El pago se hace en taquilla. Mostrá estos códigos al llegar (una captura de pantalla sirve).
+          El pago se hace en taquilla. Muestra estos códigos al llegar (una captura de pantalla sirve).
         </p>
       )}
 

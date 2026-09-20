@@ -14,7 +14,7 @@ export const apiLimiter = rateLimit({
   limit: isProd ? 300 : 5000,
   standardHeaders: true,
   legacyHeaders: false,
-  message: tooManyRequests('Demasiadas solicitudes, probá de nuevo en unos minutos'),
+  message: tooManyRequests('Demasiadas solicitudes, intenta de nuevo en unos minutos'),
 });
 
 export const authLimiter = rateLimit({
@@ -22,7 +22,7 @@ export const authLimiter = rateLimit({
   limit: isProd ? 10 : 1000,
   standardHeaders: true,
   legacyHeaders: false,
-  message: tooManyRequests('Demasiados intentos, probá de nuevo en unos minutos'),
+  message: tooManyRequests('Demasiados intentos, intenta de nuevo en unos minutos'),
 });
 
 export const signalLimiter = rateLimit({
@@ -30,7 +30,7 @@ export const signalLimiter = rateLimit({
   limit: isProd ? 60 : 1000,
   standardHeaders: true,
   legacyHeaders: false,
-  message: tooManyRequests('Demasiadas solicitudes, probá de nuevo en un momento'),
+  message: tooManyRequests('Demasiadas solicitudes, intenta de nuevo en un momento'),
 });
 
 // apartar es público y manda correos: límite estricto por IP para que nadie
@@ -40,5 +40,5 @@ export const reservationLimiter = rateLimit({
   limit: isProd ? 10 : 1000,
   standardHeaders: true,
   legacyHeaders: false,
-  message: tooManyRequests('Demasiadas reservas desde esta conexión, probá más tarde'),
+  message: tooManyRequests('Demasiadas reservas desde esta conexión, intenta más tarde'),
 });

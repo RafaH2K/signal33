@@ -52,7 +52,7 @@ export default function Profile() {
 
   return (
     <main className="mx-auto max-w-md px-6 pb-24 pt-32">
-      <h1 className="mb-16 text-center font-display text-2xl uppercase tracking-wide-caps">Perfil</h1>
+      <h1 className="mb-16 text-center font-brand text-2xl">Perfil</h1>
 
       <form onSubmit={saveProfile} className="mb-16 flex flex-col gap-4">
         <Field label="Nombre" value={name} onChange={(e) => setName(e.target.value)} required />

@@ -80,7 +80,7 @@ export default function ProductDetail() {
             {adding ? 'Agregando...' : 'Agregar al carrito'}
           </button>
         ) : (
-          <p className="text-sm text-mist">Iniciá sesión para comprar.</p>
+          <p className="text-sm text-mist">Inicia sesión para comprar.</p>
         )}
         {error && <p className="text-xs text-signal-glow">{error}</p>}
       </div>
