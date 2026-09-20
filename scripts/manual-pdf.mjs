@@ -1,11 +1,11 @@
-// Convierte docs/manual.html en docs/manual.pdf usando el Edge instalado.
+// Convierte docs/manual.html en docs/SIGNAL33-manual-boletos.pdf usando el Edge instalado.
 //
 //   node scripts/manual-pdf.mjs
 import path from 'node:path';
 import { chromium } from 'playwright-core';
 
 const html = path.resolve('docs/manual.html');
-const pdf = path.resolve('docs/manual.pdf');
+const pdf = path.resolve('docs/SIGNAL33-manual-boletos.pdf');
 
 const browser = await chromium.launch({ channel: 'msedge' });
 const page = await browser.newPage();
