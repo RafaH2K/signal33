@@ -1,5 +1,5 @@
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
+-- gen_random_uuid() es nativo desde PostgreSQL 13; no hace falta pgcrypto
+-- (Azure no lo permite sin habilitarlo en azure.extensions).
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
