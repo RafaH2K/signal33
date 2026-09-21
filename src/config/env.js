@@ -42,6 +42,8 @@ export const env = {
     provider: process.env.STORAGE_PROVIDER || 'local',
     bucket: process.env.STORAGE_BUCKET,
     apiKey: process.env.STORAGE_API_KEY,
+    azureConnectionString:
+      process.env.STORAGE_PROVIDER === 'azure' ? required('AZURE_STORAGE_CONNECTION_STRING') : undefined,
   },
 
   logLevel: process.env.LOG_LEVEL || 'info',
