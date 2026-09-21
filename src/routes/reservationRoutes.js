@@ -9,11 +9,13 @@ export const reservationRoutes = Router();
 const boxOffice = [authenticate, authorize('ADMIN', 'STAFF')];
 const adminOnly = [authenticate, authorize('ADMIN')];
 
-// públicas: apartar, disponibilidad, consultar por código de seguimiento y ver el QR
-reservationRoutes.post('/', reservationLimiter, reservationController.create);
+// públicas: disponibilidad, consultar por código de seguimiento y ver el QR
 reservationRoutes.get('/availability/:eventId', reservationController.availability);
 reservationRoutes.get('/track/:trackingCode', reservationController.track);
 reservationRoutes.get('/tickets/:code/qr.png', reservationController.qr);
+
+// apartar boletos: Ahora requiere autenticación de usuario
+reservationRoutes.post('/', authenticate, reservationLimiter, reservationController.create);
 
 // taquilla: personal (STAFF) y admin
 reservationRoutes.get('/', ...boxOffice, reservationController.list);

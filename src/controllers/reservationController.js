@@ -25,7 +25,9 @@ function handle(fn) {
 
 export const create = handle(async (req, res) => {
   const data = createReservationSchema.parse(req.body);
-  ok(res, await reservationService.createReservation(data), 201);
+  // Añadimos el userId (req.user.sub) para validar el límite por cuenta
+  const reservationData = { ...data, userId: req.user.sub }; 
+  ok(res, await reservationService.createReservation(reservationData), 201);
 });
 
 export const availability = handle(async (req, res) => {

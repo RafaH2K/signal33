@@ -19,7 +19,6 @@ async function getBookableEvent(eventId) {
 export async function getAvailability(eventId) {
   const event = await getBookableEvent(eventId);
   const reserved = await reservationRepository.reservedByAccessType(eventId);
-
   const accessTypes = Object.keys(PRICE_COLUMN).map((type) => {
     const capacity = event[CAPACITY_COLUMN[type]];
     return {
@@ -28,7 +27,6 @@ export async function getAvailability(eventId) {
       remaining: capacity === null ? null : Math.max(0, capacity - (reserved[type] ?? 0)),
     };
   });
-
   return {
     eventId: event.id,
     maxAccessesPerPerson: event.max_accesses_per_person,
@@ -37,13 +35,12 @@ export async function getAvailability(eventId) {
   };
 }
 
-export async function createReservation({ eventId, fullName, email, accessType, quantity }) {
+export async function createReservation({ eventId, fullName, email, accessType, quantity, userId }) {
   const event = await getBookableEvent(eventId);
   if (new Date(event.event_date) < new Date()) throw new AppError('El evento ya pasó', 400);
-
   const limit = event.max_accesses_per_person;
   if (quantity > limit) throw new AppError(`Máximo ${limit} accesos por persona`, 400);
-
+  
   const result = await reservationRepository.createWithTickets({
     event,
     trackingCode: generateTrackingCode(),
@@ -53,8 +50,9 @@ export async function createReservation({ eventId, fullName, email, accessType, 
     quantity,
     unitPrice: event[PRICE_COLUMN[accessType]],
     ticketCodes: Array.from({ length: quantity }, generateTicketCode),
+    userId,
   });
-
+  
   if (result.rejected === 'EVENT_FULL') {
     throw new AppError(
       result.remaining === 0
@@ -63,19 +61,19 @@ export async function createReservation({ eventId, fullName, email, accessType, 
       409
     );
   }
+  
   if (result.rejected === 'PERSON_LIMIT') {
     const remaining = Math.max(0, limit - result.alreadyReserved);
     throw new AppError(
       remaining === 0
-        ? `Ya apartaste el máximo de ${limit} accesos con este correo`
-        : `Con este correo sólo puedes apartar ${remaining} acceso(s) más`,
+        ? `Tu cuenta ya apartó el máximo de ${limit} accesos`
+        : `Con tu cuenta sólo puedes apartar ${remaining} acceso(s) más`,
       409
     );
   }
-
+  
   const { reservation, tickets } = result;
   await sendEmail({ ...reservation, event_title: event.title, event_date: event.event_date, venue: event.venue }, tickets);
-
   return { ...reservation, tickets };
 }
 
@@ -125,11 +123,9 @@ export async function checkInTicket(code, userId) {
   const ticket = await getTicketByCode(code);
   if (!ticket.is_paid) throw new AppError('No está pagado: cobra antes de dejar pasar', 409);
   if (ticket.checked_in_at) throw new AppError('Este acceso ya fue usado', 409);
-
   const checkedIn = await reservationRepository.checkInTicket(code, userId);
   // perdió la carrera contra otro lector: alguien más acaba de usar el mismo QR
   if (!checkedIn) throw new AppError('Este acceso ya fue usado', 409);
-
   return getTicketByCode(code);
 }
 
@@ -142,7 +138,7 @@ export async function setPaymentStatus(id, isPaid, userId) {
   // setPaid no toca nada si ya estaba en ese estado (dos personas tocaron el
   // botón a la vez): eso es éxito, así que siempre respondemos con el estado
   // actual, y getActiveReservation da 404 si no existe o está cancelada
-  await reservationRepository.setPaid(id, isPaid, userId);
+  await reservationRepository.setPaymentStatus(id, isPaid, userId);
   return getActiveReservation(id);
 }
 
@@ -164,7 +160,6 @@ export async function resendEmail(id, userId) {
 export async function getEventStats(eventId) {
   const event = await eventRepository.findById(eventId, { includeInactive: true });
   if (!event) throw new AppError('Evento no encontrado', 404);
-
   const { byType, checkedIn, byStaff } = await reservationRepository.eventStats(eventId);
   const types = Object.keys(PRICE_COLUMN).map((type) => {
     const row = byType.find((r) => r.access_type === type);
@@ -177,7 +172,6 @@ export async function getEventStats(eventId) {
       pending: Number(row?.pending ?? 0),
     };
   });
-
   const sum = (key) => types.reduce((total, t) => total + t[key], 0);
   return {
     reserved: sum('reserved'),
@@ -217,5 +211,5 @@ export async function exportCsv(eventId) {
       .join(',')
   );
   // BOM para que Excel respete los acentos
-  return `﻿${[header.map(csvCell).join(','), ...lines].join('\r\n')}`;
+  return `\uFEFF${[header.map(csvCell).join(','), ...lines].join('\r\n')}`;
 }

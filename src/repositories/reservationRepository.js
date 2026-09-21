@@ -24,7 +24,7 @@ export async function reservedByAccessType(eventId) {
 // Cupo del evento y cupo por persona se revisan adentro de la transacción,
 // cada uno con su lock: sin ellos, envíos simultáneos verían el mismo conteo y
 // todos pasarían. Los locks se toman siempre en el mismo orden (evento/tipo y
-// luego correo) para que dos transacciones nunca se bloqueen mutuamente.
+// luego cuenta) para que dos transacciones nunca se bloqueen mutuamente.
 // Devuelve { rejected: 'EVENT_FULL' | 'PERSON_LIMIT', ... } sin insertar.
 export async function createWithTickets({
   event,
@@ -35,6 +35,7 @@ export async function createWithTickets({
   quantity,
   unitPrice,
   ticketCodes,
+  userId
 }) {
   return withTransaction(async (client) => {
     const capacity = event[CAPACITY_COLUMN[accessType]];
@@ -49,12 +50,12 @@ export async function createWithTickets({
       if (quantity > remaining) return { rejected: 'EVENT_FULL', remaining: Math.max(0, remaining) };
     }
 
-    await client.query('SELECT pg_advisory_xact_lock(hashtext($1 || lower($2)))', [event.id, email]);
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1 || $2::text))', [event.id, userId]);
     const { rows: countRows } = await client.query(
       `SELECT COALESCE(SUM(quantity), 0)::int AS total
        FROM reservations
-       WHERE event_id = $1 AND lower(email) = lower($2) AND cancelled_at IS NULL`,
-      [event.id, email]
+       WHERE event_id = $1 AND user_id = $2 AND cancelled_at IS NULL`,
+      [event.id, userId]
     );
     const alreadyReserved = countRows[0].total;
     if (alreadyReserved + quantity > event.max_accesses_per_person) {
@@ -62,10 +63,10 @@ export async function createWithTickets({
     }
 
     const { rows } = await client.query(
-      `INSERT INTO reservations (event_id, tracking_code, full_name, email, access_type, quantity, unit_price)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO reservations (event_id, tracking_code, full_name, email, access_type, quantity, unit_price, user_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *, (unit_price * quantity) AS amount_due`,
-      [event.id, trackingCode, fullName, email, accessType, quantity, unitPrice]
+      [event.id, trackingCode, fullName, email, accessType, quantity, unitPrice, userId]
     );
     const reservation = rows[0];
 
