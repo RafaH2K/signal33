@@ -135,10 +135,7 @@ export async function listReservations(params) {
 }
 
 export async function setPaymentStatus(id, isPaid, userId) {
-  // setPaid no toca nada si ya estaba en ese estado (dos personas tocaron el
-  // botón a la vez): eso es éxito, así que siempre respondemos con el estado
-  // actual, y getActiveReservation da 404 si no existe o está cancelada
-  await reservationRepository.setPaymentStatus(id, isPaid, userId);
+  await reservationRepository.setPaid(id, isPaid, userId);
   return getActiveReservation(id);
 }
 
