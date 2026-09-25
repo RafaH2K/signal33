@@ -1,2 +1,6 @@
+packages:
+  - frontend
+  - fyf-tickets
+
 allowBuilds:
   bcrypt: true
