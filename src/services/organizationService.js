@@ -101,3 +101,10 @@ export async function checkIn(organizationId, userId, role, code) {
   if (!reservation) throw new AppError('Boleto no encontrado', 404);
   return reservationService.checkInTicket(code, userId);
 }
+
+export async function resendEmail(organizationId, reservationId, userId, role) {
+  await requireMembership(organizationId, userId, role);
+  const reservation = await organizationRepository.findReservation(organizationId, reservationId);
+  if (!reservation) throw new AppError('Reserva no encontrada', 404);
+  return reservationService.resendEmail(reservationId, userId);
+}

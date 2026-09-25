@@ -9,6 +9,7 @@ import {
 import { eventsApi, reservationsApi } from '../api/resources.js';
 import { getUser } from '../auth/auth.js';
 import { formatLongDate, formatMoney, formatTime } from '../lib/format.js';
+import './event.css';
 
 export default function Reservation() {
   const { id } = useParams();

@@ -179,6 +179,16 @@ export async function resendEmail(id, userId) {
   return { sent: true };
 }
 
+export async function resendEmailByTracking(trackingCode) {
+  const reservation = await reservationRepository.findByTrackingCode(trackingCode);
+  if (!reservation) throw new AppError('Reserva no encontrada', 404);
+  const tickets = await reservationRepository.findTickets(reservation.id);
+  const sent = await sendEmail(reservation, tickets);
+  if (!sent) throw new AppError('No se pudo enviar el correo, revisa la configuración de Resend', 502);
+  await reservationRepository.logAction(reservation.id, 'EMAIL_RESENT', null);
+  return { sent: true, email: reservation.email };
+}
+
 export async function getEventStats(eventId) {
   const event = await eventRepository.findById(eventId, { includeInactive: true });
   if (!event) throw new AppError('Evento no encontrado', 404);

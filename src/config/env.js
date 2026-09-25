@@ -11,6 +11,7 @@ export const env = {
   port: Number(process.env.PORT) || 4000,
   appUrl: process.env.APP_URL,
   frontendUrl: process.env.FRONTEND_URL,
+  ticketsUrl: process.env.TICKETS_URL || 'https://tickets.findyourfrequency.com.mx',
 
   db: {
     host: required('DATABASE_HOST'),
@@ -35,7 +36,13 @@ export const env = {
 
   resend: {
     apiKey: required('RESEND_API_KEY'),
-    fromEmail: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
+    fromEmail: process.env.RESEND_FROM_EMAIL || 'FYF Tickets <tickets@findyourfrequency.com.mx>',
+  },
+
+  googleWallet: {
+    issuerId: process.env.GOOGLE_WALLET_ISSUER_ID,
+    serviceAccountEmail: process.env.GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL,
+    privateKey: process.env.GOOGLE_WALLET_PRIVATE_KEY ? process.env.GOOGLE_WALLET_PRIVATE_KEY.replace(/\\n/g, '\n') : undefined,
   },
 
   storage: {

@@ -16,4 +16,5 @@ organizationRoutes.patch('/:organizationId/events/:eventId', controller.updateEv
 organizationRoutes.delete('/:organizationId/events/:eventId', controller.deleteEvent);
 organizationRoutes.get('/:organizationId/reservations', controller.listReservations);
 organizationRoutes.patch('/:organizationId/reservations/:reservationId/payment', controller.setPayment);
+organizationRoutes.post('/:organizationId/reservations/:reservationId/resend-email', controller.resendEmail);
 organizationRoutes.post('/:organizationId/tickets/:code/check-in', controller.checkIn);
