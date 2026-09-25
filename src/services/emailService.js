@@ -44,7 +44,7 @@ export async function sendReservationEmail({ reservation, tickets }) {
       (ticket, index) => `
         <div style="border:1px solid #ddd;border-radius:12px;padding:16px;margin:12px 0;text-align:center">
           <p style="margin:0 0 4px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#666">
-            Acceso ${index + 1} de ${tickets.length} · ${ACCESS_LABELS[reservation.access_type]}
+            ${escapeHtml(reservation.ticket_type_name || ACCESS_LABELS[reservation.access_type] || 'Boleto')}
           </p>
           <img src="${env.appUrl}/api/reservations/tickets/${ticket.code}/qr.png"
                alt="Código QR del acceso ${index + 1}" width="220" height="220" style="display:block;margin:8px auto" />

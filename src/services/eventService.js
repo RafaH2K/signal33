@@ -14,7 +14,13 @@ export async function getEvent(id, { includeInactive } = {}) {
 }
 
 export async function createEvent(data) {
-  return eventRepository.create(data);
+  const ticketTypes = data.ticketTypes ?? [
+    { name: 'General', price: data.priceGeneral ?? 0, capacity: data.capacityGeneral ?? null },
+    ...(data.priceOpenBar > 0 || data.capacityOpenBar != null
+      ? [{ name: 'Barra libre', price: data.priceOpenBar ?? 0, capacity: data.capacityOpenBar ?? null }]
+      : []),
+  ];
+  return eventRepository.create({ ...data, ticketTypes });
 }
 
 export async function updateEvent(id, data) {

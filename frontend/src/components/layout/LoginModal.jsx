@@ -166,15 +166,19 @@ function ForgotForm() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setError('');
     setLoading(true);
     try {
       await authApi.forgotPassword(email);
+      setSent(true);
+    } catch (err) {
+      setError(err.message || 'No se pudo enviar la solicitud. Intenta nuevamente.');
     } finally {
       setLoading(false);
-      setSent(true);
     }
   }
 
@@ -185,6 +189,7 @@ function ForgotForm() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Field label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+      {error && <p className="text-xs text-signal-glow" role="alert">{error}</p>}
       <button
         type="submit"
         disabled={loading}

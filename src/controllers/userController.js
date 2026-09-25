@@ -67,7 +67,7 @@ export async function deleteUser(req, res, next) {
 export async function updateRole(req, res, next) {
   try {
     const { role } = updateRoleSchema.parse(req.body);
-    const user = await userService.updateRole(req.params.id, role, req.user.sub);
+    const user = await userService.updateRole(req.params.id, role, req.user.sub, req.user.role);
     ok(res, user);
   } catch (error) {
     next(error);

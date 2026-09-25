@@ -4,9 +4,13 @@ export const createReservationSchema = z.object({
   eventId: z.string().uuid(),
   fullName: z.string().trim().min(2).max(120),
   email: z.string().trim().toLowerCase().email().max(200),
-  accessType: z.enum(['GENERAL', 'OPEN_BAR']),
+  ticketTypeId: z.string().uuid().optional(),
+  accessType: z.enum(['GENERAL', 'OPEN_BAR']).optional(),
   // el tope real por persona lo decide el evento; esto sólo corta basura obvia
   quantity: z.coerce.number().int().min(1).max(10),
+}).refine((value) => value.ticketTypeId || value.accessType, {
+  message: 'Selecciona un tipo de boleto',
+  path: ['ticketTypeId'],
 });
 
 export const trackingCodeSchema = z.string().trim().toUpperCase().regex(/^SR-[2-9A-Z]{8}$/);

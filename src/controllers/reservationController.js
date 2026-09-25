@@ -94,3 +94,7 @@ export const exportCsv = handle(async (req, res) => {
   });
   res.send(csv);
 });
+
+export const mine = handle(async (req, res) => {
+  ok(res, await reservationService.listMyReservations(req.user.sub));
+});

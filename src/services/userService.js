@@ -1,18 +1,12 @@
 import bcrypt from 'bcrypt';
 import { AppError } from '../utils/AppError.js';
 import * as userRepository from '../repositories/userRepository.js';
-
-const SALT_ROUNDS = 12;
-
-function sanitize(user) {
-  const { password_hash, ...safe } = user;
-  return safe;
-}
+import { PASSWORD_SALT_ROUNDS, sanitizeUser } from '../utils/user.js';
 
 export async function getProfile(userId) {
   const user = await userRepository.findById(userId);
   if (!user) throw new AppError('Usuario no encontrado', 404);
-  return sanitize(user);
+  return sanitizeUser(user);
 }
 
 export async function updateProfile(userId, data) {
@@ -22,7 +16,7 @@ export async function updateProfile(userId, data) {
   }
   const user = await userRepository.updateProfile(userId, data);
   if (!user) throw new AppError('Usuario no encontrado', 404);
-  return sanitize(user);
+  return sanitizeUser(user);
 }
 
 export async function changePassword(userId, { currentPassword, newPassword }) {
@@ -32,19 +26,19 @@ export async function changePassword(userId, { currentPassword, newPassword }) {
   const valid = await bcrypt.compare(currentPassword, user.password_hash);
   if (!valid) throw new AppError('Contraseña actual incorrecta', 401);
 
-  const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  const passwordHash = await bcrypt.hash(newPassword, PASSWORD_SALT_ROUNDS);
   await userRepository.updatePassword(userId, passwordHash);
 }
 
 export async function listUsers({ page, pageSize }) {
   const { users, total } = await userRepository.findAll({ page, pageSize });
-  return { users: users.map(sanitize), total, page, pageSize };
+  return { users: users.map(sanitizeUser), total, page, pageSize };
 }
 
 export async function getUserById(id) {
   const user = await userRepository.findById(id);
   if (!user) throw new AppError('Usuario no encontrado', 404);
-  return sanitize(user);
+  return sanitizeUser(user);
 }
 
 export async function deleteUser(id) {
@@ -53,10 +47,11 @@ export async function deleteUser(id) {
   await userRepository.softDelete(id);
 }
 
-export async function updateRole(id, role, requesterId) {
+export async function updateRole(id, role, requesterId, requesterRole) {
+  if (requesterRole !== 'ADMIN') throw new AppError('Solo un admin puede cambiar roles', 403);
   // un admin quitándose el rol a sí mismo puede dejar el sitio sin admins
   if (id === requesterId && role !== 'ADMIN') throw new AppError('No puedes quitarte tu propio rol de admin', 400);
   const user = await userRepository.updateRole(id, role);
   if (!user) throw new AppError('Usuario no encontrado', 404);
-  return sanitize(user);
+  return sanitizeUser(user);
 }

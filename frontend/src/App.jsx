@@ -23,6 +23,7 @@ import AdminAbout from './pages/admin/About.jsx';
 import AdminSignals from './pages/admin/Signals.jsx';
 import AdminOrders from './pages/admin/Orders.jsx';
 import AdminUsers from './pages/admin/Users.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
 
 export default function App() {
   const { pathname } = useLocation();
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="/tienda/:id" element={<ProductDetail />} />
         <Route path="/trayectoria" element={<Trayectoria />} />
         <Route path="/signal" element={<SignalPage />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/boletos" element={<Tickets />} />
         <Route path="/boletos/validar/:code" element={<TicketValidate />} />
         <Route path="/boletos/:trackingCode" element={<TicketStatus />} />

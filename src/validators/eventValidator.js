@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+export const ticketTypeSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().trim().min(2).max(80),
+  price: z.coerce.number().min(0).max(1_000_000),
+  capacity: z.coerce.number().int().min(0).nullable().optional(),
+});
+
 export const createEventSchema = z.object({
   title: z.string().min(2).max(200),
   description: z.string().max(2000).optional(),
@@ -15,6 +22,7 @@ export const createEventSchema = z.object({
   // null = sin límite
   capacityGeneral: z.coerce.number().int().min(0).nullable().optional(),
   capacityOpenBar: z.coerce.number().int().min(0).nullable().optional(),
+  ticketTypes: z.array(ticketTypeSchema).min(1).max(20).optional(),
 });
 
 export const updateEventSchema = createEventSchema.partial();

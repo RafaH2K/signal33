@@ -9,16 +9,14 @@ const RESERVATION_WITH_EVENT = `
   LEFT JOIN users pb ON pb.id = r.paid_by
 `;
 
-const CAPACITY_COLUMN = { GENERAL: 'capacity_general', OPEN_BAR: 'capacity_open_bar' };
-
-export async function reservedByAccessType(eventId) {
+export async function reservedByTicketType(eventId) {
   const { rows } = await query(
-    `SELECT access_type, COALESCE(SUM(quantity), 0)::int AS reserved
+    `SELECT ticket_type_id, COALESCE(SUM(quantity), 0)::int AS reserved
      FROM reservations WHERE event_id = $1 AND cancelled_at IS NULL
-     GROUP BY access_type`,
+     GROUP BY ticket_type_id`,
     [eventId]
   );
-  return Object.fromEntries(rows.map((row) => [row.access_type, row.reserved]));
+  return Object.fromEntries(rows.map((row) => [row.ticket_type_id, row.reserved]));
 }
 
 // Cupo del evento y cupo por persona se revisan adentro de la transacción,
@@ -28,29 +26,29 @@ export async function reservedByAccessType(eventId) {
 // Devuelve { rejected: 'EVENT_FULL' | 'PERSON_LIMIT', ... } sin insertar.
 export async function createWithTickets({
   event,
+  ticketType,
   trackingCode,
   fullName,
   email,
-  accessType,
+  accessType = 'GENERAL',
   quantity,
-  unitPrice,
   ticketCodes,
   userId
 }) {
   return withTransaction(async (client) => {
-    const capacity = event[CAPACITY_COLUMN[accessType]];
+    const capacity = ticketType.capacity;
     if (capacity !== null && capacity !== undefined) {
-      await client.query('SELECT pg_advisory_xact_lock(hashtext($1 || $2))', [event.id, accessType]);
+      await client.query('SELECT pg_advisory_xact_lock(hashtext($1::text || $2::text))', [event.id, ticketType.id]);
       const { rows } = await client.query(
         `SELECT COALESCE(SUM(quantity), 0)::int AS total FROM reservations
-         WHERE event_id = $1 AND access_type = $2 AND cancelled_at IS NULL`,
-        [event.id, accessType]
+         WHERE event_id = $1 AND ticket_type_id = $2 AND cancelled_at IS NULL`,
+        [event.id, ticketType.id]
       );
       const remaining = capacity - rows[0].total;
       if (quantity > remaining) return { rejected: 'EVENT_FULL', remaining: Math.max(0, remaining) };
     }
 
-    await client.query('SELECT pg_advisory_xact_lock(hashtext($1 || $2::text))', [event.id, userId]);
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1::text || $2::text))', [event.id, userId]);
     const { rows: countRows } = await client.query(
       `SELECT COALESCE(SUM(quantity), 0)::int AS total
        FROM reservations
@@ -63,10 +61,13 @@ export async function createWithTickets({
     }
 
     const { rows } = await client.query(
-      `INSERT INTO reservations (event_id, tracking_code, full_name, email, access_type, quantity, unit_price, user_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO reservations
+         (event_id, tracking_code, full_name, email, access_type, ticket_type_id,
+          ticket_type_name, quantity, unit_price, user_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *, (unit_price * quantity) AS amount_due`,
-      [event.id, trackingCode, fullName, email, accessType, quantity, unitPrice, userId]
+      [event.id, trackingCode, fullName, email, accessType, ticketType.id, ticketType.name,
+        quantity, ticketType.price, userId]
     );
     const reservation = rows[0];
 
@@ -82,7 +83,15 @@ export async function createWithTickets({
 }
 
 export async function findByTrackingCode(trackingCode) {
-  const { rows } = await query(`${RESERVATION_WITH_EVENT} WHERE r.tracking_code = $1`, [trackingCode]);
+  const { rows } = await query(
+    `SELECT r.id, r.tracking_code, r.full_name, r.access_type, r.ticket_type_name, r.quantity,
+            (r.unit_price * r.quantity) AS amount_due, r.is_paid, r.cancelled_at,
+            e.title AS event_title, e.event_date, e.venue
+     FROM reservations r
+     JOIN events e ON e.id = r.event_id
+     WHERE r.tracking_code = $1`,
+    [trackingCode]
+  );
   return rows[0] || null;
 }
 
@@ -104,7 +113,7 @@ export async function findTickets(reservationId) {
 export async function findTicketByCode(code) {
   const { rows } = await query(
     `SELECT t.*, u.name AS checked_in_by_name,
-            r.tracking_code, r.full_name, r.email, r.access_type, r.quantity, r.is_paid, r.cancelled_at,
+            r.tracking_code, r.full_name, r.email, r.access_type, r.ticket_type_name, r.quantity, r.is_paid, r.cancelled_at,
             (r.unit_price * r.quantity) AS amount_due,
             e.id AS event_id, e.title AS event_title, e.event_date, e.venue
      FROM tickets t
@@ -225,7 +234,7 @@ export async function findAll({ eventId, isPaid, search, page, pageSize }) {
 // lista completa para exportar (respaldo en papel si se cae el internet)
 export async function findAllForExport(eventId) {
   const { rows } = await query(
-    `SELECT r.tracking_code, r.full_name, r.email, r.access_type, r.quantity,
+    `SELECT r.tracking_code, r.full_name, r.email, r.access_type, r.ticket_type_name, r.quantity,
             (r.unit_price * r.quantity) AS amount_due, r.is_paid, r.paid_at, pb.name AS paid_by_name,
             string_agg(t.code, ' ' ORDER BY t.created_at) AS ticket_codes,
             COUNT(t.checked_in_at)::int AS checked_in
@@ -242,14 +251,15 @@ export async function findAllForExport(eventId) {
 
 export async function eventStats(eventId) {
   const { rows: byType } = await query(
-    `SELECT r.access_type,
+    `SELECT r.ticket_type_id, r.ticket_type_name, tt.capacity,
             COALESCE(SUM(r.quantity), 0)::int AS reserved,
             COALESCE(SUM(r.quantity) FILTER (WHERE r.is_paid), 0)::int AS paid,
             COALESCE(SUM(r.unit_price * r.quantity) FILTER (WHERE r.is_paid), 0)::numeric AS collected,
             COALESCE(SUM(r.unit_price * r.quantity) FILTER (WHERE NOT r.is_paid), 0)::numeric AS pending
      FROM reservations r
+     LEFT JOIN event_ticket_types tt ON tt.id = r.ticket_type_id
      WHERE r.event_id = $1 AND r.cancelled_at IS NULL
-     GROUP BY r.access_type`,
+     GROUP BY r.ticket_type_id, r.ticket_type_name, tt.capacity`,
     [eventId]
   );
 
@@ -273,4 +283,16 @@ export async function eventStats(eventId) {
   );
 
   return { byType, checkedIn: checkIns[0].checked_in, byStaff };
+}
+
+export async function findAllForUser(userId) {
+  const { rows } = await query(
+    `SELECT r.id, r.tracking_code, r.full_name, r.access_type, r.ticket_type_name, r.quantity,
+            r.unit_price, (r.unit_price * r.quantity) AS amount_due, r.is_paid,
+            r.cancelled_at, r.created_at, e.title AS event_title, e.event_date, e.venue
+     FROM reservations r JOIN events e ON e.id = r.event_id
+     WHERE r.user_id = $1 ORDER BY r.created_at DESC`,
+    [userId]
+  );
+  return rows;
 }

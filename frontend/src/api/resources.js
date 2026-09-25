@@ -6,6 +6,7 @@ export const authApi = {
   me: () => apiRequest('/auth/me'),
   logout: (refreshToken) => apiRequest('/auth/logout', { method: 'POST', body: { refreshToken } }),
   forgotPassword: (email) => apiRequest('/auth/forgot-password', { method: 'POST', body: { email } }),
+  resetPassword: (token, password) => apiRequest('/auth/reset-password', { method: 'POST', body: { token, password } }),
 };
 
 function saveTokens(data) {

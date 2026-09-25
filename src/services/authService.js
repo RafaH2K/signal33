@@ -7,15 +7,9 @@ import * as userRepository from '../repositories/userRepository.js';
 import * as refreshTokenRepository from '../repositories/refreshTokenRepository.js';
 import * as passwordResetTokenRepository from '../repositories/passwordResetTokenRepository.js';
 import { sendPasswordResetEmail } from './emailService.js';
+import { PASSWORD_SALT_ROUNDS, sanitizeUser } from '../utils/user.js';
 
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
-
-const SALT_ROUNDS = 12;
-
-function sanitize(user) {
-  const { password_hash, ...safe } = user;
-  return safe;
-}
 
 function hashToken(token) {
   return createHash('sha256').update(token).digest('hex');
@@ -32,10 +26,10 @@ export async function register({ name, email, password }) {
   const existing = await userRepository.findByEmail(email);
   if (existing) throw new AppError('El correo ya está registrado', 409);
 
-  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+  const passwordHash = await bcrypt.hash(password, PASSWORD_SALT_ROUNDS);
   const user = await userRepository.create({ name, email, passwordHash });
   const tokens = await issueTokens(user);
-  return { user: sanitize(user), ...tokens };
+  return { user: sanitizeUser(user), ...tokens };
 }
 
 export async function login({ email, password }) {
@@ -46,7 +40,7 @@ export async function login({ email, password }) {
   if (!valid) throw new AppError('Credenciales inválidas', 401);
 
   const tokens = await issueTokens(user);
-  return { user: sanitize(user), ...tokens };
+  return { user: sanitizeUser(user), ...tokens };
 }
 
 async function issueTokens(user) {
@@ -77,7 +71,7 @@ export async function refresh(refreshToken) {
 
   await refreshTokenRepository.revokeByHash(tokenHash);
   const tokens = await issueTokens(user);
-  return { user: sanitize(user), ...tokens };
+  return { user: sanitizeUser(user), ...tokens };
 }
 
 export async function logout(refreshToken) {
@@ -103,7 +97,7 @@ export async function resetPassword(token, newPassword) {
   const stored = await passwordResetTokenRepository.findValidByHash(hashToken(token));
   if (!stored) throw new AppError('Token inválido o expirado', 400);
 
-  const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  const passwordHash = await bcrypt.hash(newPassword, PASSWORD_SALT_ROUNDS);
   await userRepository.updatePassword(stored.user_id, passwordHash);
   await passwordResetTokenRepository.markUsed(stored.id);
 }
@@ -111,5 +105,5 @@ export async function resetPassword(token, newPassword) {
 export async function me(userId) {
   const user = await userRepository.findById(userId);
   if (!user) throw new AppError('Usuario no encontrado', 404);
-  return sanitize(user);
+  return sanitizeUser(user);
 }

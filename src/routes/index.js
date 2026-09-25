@@ -11,6 +11,7 @@ import { uploadRoutes } from './uploadRoutes.js';
 import { dashboardRoutes } from './dashboardRoutes.js';
 import { signalRoutes } from './signalRoutes.js';
 import { reservationRoutes } from './reservationRoutes.js';
+import { organizationRoutes } from './organizationRoutes.js';
 
 export const routes = Router();
 
@@ -26,3 +27,4 @@ routes.use('/uploads', uploadRoutes);
 routes.use('/dashboard', dashboardRoutes);
 routes.use('/signal', signalRoutes);
 routes.use('/reservations', reservationRoutes);
+routes.use('/organizations', organizationRoutes);

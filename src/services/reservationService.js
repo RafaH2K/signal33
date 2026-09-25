@@ -2,12 +2,9 @@ import { AppError } from '../utils/AppError.js';
 import { generateTicketCode, generateTrackingCode } from '../utils/codes.js';
 import * as reservationRepository from '../repositories/reservationRepository.js';
 import * as eventRepository from '../repositories/eventRepository.js';
+import * as ticketTypeRepository from '../repositories/ticketTypeRepository.js';
 import * as emailService from './emailService.js';
 import { logger } from '../config/logger.js';
-
-const PRICE_COLUMN = { GENERAL: 'price_general', OPEN_BAR: 'price_open_bar' };
-const CAPACITY_COLUMN = { GENERAL: 'capacity_general', OPEN_BAR: 'capacity_open_bar' };
-const ACCESS_LABEL = { GENERAL: 'acceso general', OPEN_BAR: 'barra libre' };
 
 async function getBookableEvent(eventId) {
   const event = await eventRepository.findById(eventId);
@@ -18,65 +15,89 @@ async function getBookableEvent(eventId) {
 // lo que ve el público antes de apartar: precios y cuántos quedan de cada tipo
 export async function getAvailability(eventId) {
   const event = await getBookableEvent(eventId);
-  const reserved = await reservationRepository.reservedByAccessType(eventId);
-  const accessTypes = Object.keys(PRICE_COLUMN).map((type) => {
-    const capacity = event[CAPACITY_COLUMN[type]];
-    return {
-      type,
-      price: Number(event[PRICE_COLUMN[type]]),
-      remaining: capacity === null ? null : Math.max(0, capacity - (reserved[type] ?? 0)),
-    };
-  });
+  const [ticketTypes, reserved] = await Promise.all([
+    ticketTypeRepository.findActiveByEvent(eventId),
+    reservationRepository.reservedByTicketType(eventId),
+  ]);
+  const generalType = ticketTypes[0];
+  const barType = ticketTypes.find((type) => type.name === 'Barra libre');
   return {
     eventId: event.id,
     maxAccessesPerPerson: event.max_accesses_per_person,
     isOpen: new Date(event.event_date) > new Date(),
-    accessTypes,
+    ticketTypes: ticketTypes.map((type) => ({
+      id: type.id,
+      name: type.name,
+      price: Number(type.price),
+      remaining: type.capacity === null ? null : Math.max(0, type.capacity - (reserved[type.id] ?? 0)),
+    })),
+    // Compatibilidad con el frontend anterior, que todavía usa GENERAL/OPEN_BAR.
+    accessTypes: [
+      {
+        type: 'GENERAL',
+        price: Number(generalType?.price ?? event.price_general),
+        remaining: generalType?.capacity == null
+          ? null
+          : Math.max(0, generalType.capacity - (reserved[generalType.id] ?? 0)),
+      },
+      ...(barType || Number(event.price_open_bar) > 0 || event.capacity_open_bar != null
+        ? [{
+          type: 'OPEN_BAR',
+          price: Number(barType?.price ?? event.price_open_bar ?? 0),
+          remaining: (barType?.capacity ?? event.capacity_open_bar) == null
+            ? null
+            : Math.max(0, (barType?.capacity ?? event.capacity_open_bar) - (barType ? reserved[barType.id] ?? 0 : 0)),
+        }]
+        : []),
+    ],
   };
 }
 
-export async function createReservation({ eventId, fullName, email, accessType, quantity, userId }) {
+export async function createReservation({ eventId, fullName, email, ticketTypeId, accessType, quantity, userId }) {
   const event = await getBookableEvent(eventId);
   if (new Date(event.event_date) < new Date()) throw new AppError('El evento ya pasó', 400);
   const limit = event.max_accesses_per_person;
-  if (quantity > limit) throw new AppError(`Máximo ${limit} accesos por persona`, 400);
-  
+  if (quantity > limit) throw new AppError(`Máximo ${limit} boletos por persona`, 400);
+  const ticketType = ticketTypeId
+    ? await ticketTypeRepository.findActiveById(eventId, ticketTypeId)
+    : await ticketTypeRepository.findActiveLegacy(eventId, accessType);
+  if (!ticketType) throw new AppError('Este precio ya no está disponible', 404);
+
   const result = await reservationRepository.createWithTickets({
     event,
+    ticketType,
     trackingCode: generateTrackingCode(),
     fullName,
     email,
-    accessType,
+    accessType: ticketTypeId ? 'GENERAL' : accessType,
     quantity,
-    unitPrice: event[PRICE_COLUMN[accessType]],
     ticketCodes: Array.from({ length: quantity }, generateTicketCode),
     userId,
   });
-  
+
   if (result.rejected === 'EVENT_FULL') {
     throw new AppError(
       result.remaining === 0
-        ? `Se agotó ${ACCESS_LABEL[accessType]}`
-        : `Sólo quedan ${result.remaining} lugar(es) de ${ACCESS_LABEL[accessType]}`,
+        ? `Se agotaron los boletos de ${ticketType.name}`
+        : `Solo quedan ${result.remaining} boleto(s) de ${ticketType.name}`,
       409
     );
   }
-  
+
   if (result.rejected === 'PERSON_LIMIT') {
     const remaining = Math.max(0, limit - result.alreadyReserved);
     throw new AppError(
       remaining === 0
-        ? `Tu cuenta ya apartó el máximo de ${limit} accesos`
-        : `Con tu cuenta sólo puedes apartar ${remaining} acceso(s) más`,
+        ? `Tu cuenta ya apartó el máximo de ${limit} boletos`
+        : `Con tu cuenta puedes apartar ${remaining} boleto(s) más`,
       409
     );
   }
-  
+
   const { reservation, tickets } = result;
   await sendEmail({ ...reservation, event_title: event.title, event_date: event.event_date, venue: event.venue }, tickets);
   return { ...reservation, tickets };
 }
-
 // el correo nunca debe tumbar la reserva: ya quedó apartada y el código de
 // seguimiento se muestra en pantalla aunque el envío falle
 async function sendEmail(reservation, tickets) {
@@ -93,9 +114,13 @@ export async function trackReservation(trackingCode) {
   const reservation = await reservationRepository.findByTrackingCode(trackingCode);
   if (!reservation || reservation.cancelled_at) throw new AppError('Reserva no encontrada', 404);
   const tickets = await reservationRepository.findTickets(reservation.id);
-  // el público no necesita saber qué empleado cobró
-  const { paid_by: _paidBy, paid_by_name: _paidByName, ...publicReservation } = reservation;
-  return { ...publicReservation, tickets };
+  const { tracking_code, full_name, access_type, ticket_type_name, quantity, amount_due, is_paid,
+    event_title, event_date, venue } = reservation;
+  return {
+    tracking_code, full_name, access_type, ticket_type_name, quantity, amount_due, is_paid,
+    event_title, event_date, venue,
+    tickets: tickets.map(({ id, code }) => ({ id, code })),
+  };
 }
 
 async function getActiveReservation(id) {
@@ -157,12 +182,17 @@ export async function resendEmail(id, userId) {
 export async function getEventStats(eventId) {
   const event = await eventRepository.findById(eventId, { includeInactive: true });
   if (!event) throw new AppError('Evento no encontrado', 404);
-  const { byType, checkedIn, byStaff } = await reservationRepository.eventStats(eventId);
-  const types = Object.keys(PRICE_COLUMN).map((type) => {
-    const row = byType.find((r) => r.access_type === type);
+  const [stats, ticketTypes] = await Promise.all([
+    reservationRepository.eventStats(eventId),
+    ticketTypeRepository.findAllByEvent(eventId),
+  ]);
+  const { byType, checkedIn, byStaff } = stats;
+  const types = ticketTypes.map((type) => {
+    const row = byType.find((r) => r.ticket_type_id === type.id);
     return {
-      type,
-      capacity: event[CAPACITY_COLUMN[type]],
+      id: type.id,
+      type: type.name,
+      capacity: type.capacity,
       reserved: row?.reserved ?? 0,
       paid: row?.paid ?? 0,
       collected: Number(row?.collected ?? 0),
@@ -196,7 +226,7 @@ export async function exportCsv(eventId) {
       r.full_name,
       r.email,
       r.tracking_code,
-      r.access_type === 'OPEN_BAR' ? 'Barra libre' : 'General',
+      r.ticket_type_name || (r.access_type === 'OPEN_BAR' ? 'Barra libre' : 'General'),
       r.quantity,
       r.amount_due,
       r.is_paid ? 'Sí' : 'No',
@@ -209,4 +239,8 @@ export async function exportCsv(eventId) {
   );
   // BOM para que Excel respete los acentos
   return `\uFEFF${[header.map(csvCell).join(','), ...lines].join('\r\n')}`;
+}
+
+export async function listMyReservations(userId) {
+  return reservationRepository.findAllForUser(userId);
 }
