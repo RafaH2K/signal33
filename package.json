@@ -2,6 +2,7 @@
   "name": "signal33-backend",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.11.1",
   "type": "module",
   "engines": {
     "node": ">=20"
