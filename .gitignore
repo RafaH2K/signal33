@@ -1,6 +1,9 @@
+.gitignore
 node_modules/
 .env
+.env.example
 src/logs/*.log
 src/uploads/*
 !src/uploads/.gitkeep
 medios para la web/
+docs/GUIA_TECNICA.md
