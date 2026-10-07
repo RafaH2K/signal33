@@ -1,8 +1,0 @@
-.gitignore
-node_modules/
-.env
-src/logs/*.log
-src/uploads/*
-!src/uploads/.gitkeep
-medios para la web/
-docs/
