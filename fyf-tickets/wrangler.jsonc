@@ -1,6 +1,10 @@
 {
+<<<<<<< HEAD
   // fyf-tickets/wrangler.jsonc
   "name": "saas33",
+=======
+  "name": "fyf-tickets",
+>>>>>>> 1b912829c0e1dac705c265a24da8a0ddf8e712fe
   "compatibility_date": "2026-09-20",
   "assets": {
     "directory": "./dist",

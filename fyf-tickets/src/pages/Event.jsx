@@ -11,7 +11,7 @@ export default function Event() {
   const [event, setEvent] = useState(null);
   const [availability, setAvailability] = useState(null);
   const [selectedType, setSelectedType] = useState(null);
-  const [quantity, setQuantity] = useState(1);
+  const [rawQuantity, setQuantity] = useState(1);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -86,15 +86,11 @@ export default function Event() {
     return maxPerPerson;
   }, [availability, selectedAccess]);
 
+  const quantity = Math.min(rawQuantity, maxQuantity);
+
   const total = selectedAccess
     ? selectedAccess.price * quantity
     : 0;
-
-  useEffect(() => {
-    if (quantity > maxQuantity) {
-      setQuantity(maxQuantity);
-    }
-  }, [quantity, maxQuantity]);
 
   if (loading) {
     return (

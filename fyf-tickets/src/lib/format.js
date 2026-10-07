@@ -21,3 +21,20 @@ export const formatDateTime = value => new Intl.DateTimeFormat('es-MX', {
 export const formatOrganizerDate = value => new Intl.DateTimeFormat('es-MX', {
   dateStyle: 'medium', timeStyle: 'short',
 }).format(new Date(value));
+
+const CODE_REGEX = /([2-9A-Z]{16})\/?$/i;
+
+export function extractTicketCode(rawText) {
+  if (!rawText) return null;
+  const trimmed = String(rawText).trim();
+  try {
+    const url = new URL(trimmed);
+    const match = url.pathname.match(/\/boletos\/(?:validar\/)?([2-9A-Z]{16})/i);
+    if (match?.[1]) return match[1].toUpperCase();
+  } catch {
+    // No es una URL, continuar
+  }
+  const match = trimmed.match(CODE_REGEX);
+  return match?.[1] ? match[1].toUpperCase() : null;
+}
+

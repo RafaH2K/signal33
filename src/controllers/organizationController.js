@@ -76,3 +76,9 @@ export const checkIn = handle(async (req, res) => {
     organizationId.parse(req.params.organizationId), req.user.sub, req.user.role, codeSchema.parse(req.params.code)
   ));
 });
+
+export const resendEmail = handle(async (req, res) => {
+  ok(res, await organizationService.resendEmail(
+    organizationId.parse(req.params.organizationId), eventId.parse(req.params.reservationId), req.user.sub, req.user.role
+  ));
+});
