@@ -12,8 +12,10 @@ const adminOnly = [authenticate, authorize('ADMIN')];
 // públicas: disponibilidad, consultar por código de seguimiento y ver el QR
 reservationRoutes.get('/availability/:eventId', reservationController.availability);
 reservationRoutes.get('/track/:trackingCode', reservationController.track);
+reservationRoutes.post('/track/:trackingCode/resend-email', reservationLimiter, reservationController.resendEmailByTracking);
 reservationRoutes.get('/mine', authenticate, reservationController.mine);
 reservationRoutes.get('/tickets/:code/qr.png', reservationController.qr);
+reservationRoutes.get('/tickets/:code/google-wallet', reservationController.googleWallet);
 
 // apartar boletos: Ahora requiere autenticación de usuario
 reservationRoutes.post('/', authenticate, reservationLimiter, reservationController.create);

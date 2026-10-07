@@ -4,6 +4,7 @@ import { authApi } from '../api/auth.js';
 import { eventsApi } from '../api/resources.js';
 import { getUser, isAuthenticated } from '../auth/auth.js';
 import { formatEventDate, formatTime } from '../lib/format.js';
+import heroImage from '../assets/hero.png';
 
 function EventCard({ event }) {
   return (
@@ -180,28 +181,48 @@ export default function Home() {
 
       <main>
         <section className="hero">
-          <div className="hero__eyebrow">
-            <span className="hero__dot" />
-            Find Your Frequency
+          <div className="hero__container">
+            <div className="hero__content">
+              <div className="hero__eyebrow">
+                <span className="hero__dot" />
+                Find Your Frequency
+              </div>
+
+              <h1>
+                Tu próximo
+                <br />
+                evento está aquí.
+              </h1>
+
+              <p className="hero__description">
+                Descubre eventos, reserva tu entrada y vive la experiencia.
+              </p>
+
+              <div className="hero__actions">
+                <a href="#eventos" className="hero__cta">
+                  Explorar eventos
+                  <span aria-hidden="true">↓</span>
+                </a>
+                <Link to="/mis-boletos" className="hero__cta-secondary">
+                  Mis boletos
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            </div>
+
+            <div className="hero__visual" aria-hidden="true">
+              <div className="hero__glow" />
+              <img
+                src={heroImage}
+                alt="Find Your Frequency Tickets"
+                className="hero__image"
+              />
+              <div className="hero__badge">
+                <span className="hero__badge-dot" />
+                <span>Boletos digitales con QR</span>
+              </div>
+            </div>
           </div>
-
-          <h1>
-            Tu próximo
-            <br />
-            evento está aquí.
-          </h1>
-
-          <p className="hero__description">
-            Descubre eventos, reserva tu entrada y vive
-            la experiencia.
-          </p>
-
-          <a href="#eventos" className="hero__cta">
-            Explorar eventos
-            <span aria-hidden="true">↓</span>
-          </a>
-
-          <div className="hero__line" />
         </section>
 
         <section id="eventos" className="events-section">
@@ -319,6 +340,12 @@ export default function Home() {
           <span className="brand__mark">FYF</span>
           <span className="brand__name">TICKETS</span>
         </div>
+
+        <nav className="footer-links" aria-label="Enlaces de pie de página">
+          <a href="#eventos">Eventos</a>
+          <Link to="/mis-boletos">Mis boletos</Link>
+          <Link to="/organizador">Organizadores</Link>
+        </nav>
 
         <span>
           © {new Date().getFullYear()} Find Your Frequency

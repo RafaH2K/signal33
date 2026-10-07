@@ -19,10 +19,33 @@ export const reservationsApi = {
       `/reservations/track/${encodeURIComponent(trackingCode)}`
     ),
 
+  resendEmail: trackingCode =>
+    apiRequest(
+      `/reservations/track/${encodeURIComponent(trackingCode)}/resend-email`,
+      { method: 'POST' }
+    ),
+
   mine: () => apiRequest('/reservations/mine'),
 
   qrUrl: code =>
     `${API_URL}/reservations/tickets/${encodeURIComponent(code)}/qr.png`,
+
+  getGoogleWallet: code =>
+    apiRequest(`/reservations/tickets/${encodeURIComponent(code)}/google-wallet`),
+
+  getTicket: code =>
+    apiRequest(`/reservations/tickets/${encodeURIComponent(code)}`),
+
+  checkIn: code =>
+    apiRequest(`/reservations/tickets/${encodeURIComponent(code)}/check-in`, {
+      method: 'POST',
+    }),
+
+  setPaid: (reservationId, isPaid) =>
+    apiRequest(`/reservations/${encodeURIComponent(reservationId)}/payment`, {
+      method: 'PATCH',
+      body: { isPaid },
+    }),
 };
 
 export const organizationsApi = {
@@ -40,5 +63,6 @@ export const organizationsApi = {
   deleteEvent: (organizationId, eventId) => apiRequest(`/organizations/${organizationId}/events/${eventId}`, { method: 'DELETE' }),
   reservations: organizationId => apiRequest(`/organizations/${organizationId}/reservations`),
   setPaid: (organizationId, reservationId, isPaid) => apiRequest(`/organizations/${organizationId}/reservations/${reservationId}/payment`, { method: 'PATCH', body: { isPaid } }),
+  resendEmail: (organizationId, reservationId) => apiRequest(`/organizations/${organizationId}/reservations/${reservationId}/resend-email`, { method: 'POST' }),
   checkIn: (organizationId, code) => apiRequest(`/organizations/${organizationId}/tickets/${encodeURIComponent(code)}/check-in`, { method: 'POST' }),
 };

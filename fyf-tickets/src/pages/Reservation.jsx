@@ -9,6 +9,7 @@ import {
 import { eventsApi, reservationsApi } from '../api/resources.js';
 import { getUser } from '../auth/auth.js';
 import { formatLongDate, formatMoney, formatTime } from '../lib/format.js';
+import './event.css';
 
 export default function Reservation() {
   const { id } = useParams();
@@ -79,6 +80,13 @@ export default function Reservation() {
         ) {
           throw new Error(
             'La cantidad seleccionada ya no está disponible.'
+          );
+        }
+
+        const maxPerPerson = availabilityData?.maxAccessesPerPerson ?? 1;
+        if (quantity > maxPerPerson) {
+          throw new Error(
+            `Solo puedes reservar hasta ${maxPerPerson} entradas por persona.`
           );
         }
       } catch (err) {

@@ -8,6 +8,7 @@ import {
   eventIdQuerySchema,
 } from '../validators/reservationValidator.js';
 import * as reservationService from '../services/reservationService.js';
+import * as googleWalletService from '../services/googleWalletService.js';
 import { renderQrPng, ticketQrPayload } from '../services/qrService.js';
 import { env } from '../config/env.js';
 import { ok } from '../utils/response.js';
@@ -42,7 +43,8 @@ export const qr = handle(async (req, res) => {
   const code = ticketCodeSchema.parse(req.params.code);
   // confirma que exista antes de dibujar: no queremos servir QR de códigos inventados
   await reservationService.getTicketByCode(code);
-  const png = await renderQrPng(ticketQrPayload(env.frontendUrl, code));
+  const targetUrl = env.ticketsUrl || env.frontendUrl || 'https://tickets.findyourfrequency.com.mx';
+  const png = await renderQrPng(ticketQrPayload(targetUrl, code));
   res.set({
     'Content-Type': 'image/png',
     'Cache-Control': 'public, max-age=86400',
@@ -81,6 +83,11 @@ export const resendEmail = handle(async (req, res) => {
   ok(res, await reservationService.resendEmail(idParamSchema.parse(req.params.id), req.user.sub));
 });
 
+export const resendEmailByTracking = handle(async (req, res) => {
+  const trackingCode = trackingCodeSchema.parse(req.params.trackingCode);
+  ok(res, await reservationService.resendEmailByTracking(trackingCode));
+});
+
 export const stats = handle(async (req, res) => {
   ok(res, await reservationService.getEventStats(idParamSchema.parse(req.params.eventId)));
 });
@@ -97,4 +104,17 @@ export const exportCsv = handle(async (req, res) => {
 
 export const mine = handle(async (req, res) => {
   ok(res, await reservationService.listMyReservations(req.user.sub));
+});
+
+export const googleWallet = handle(async (req, res) => {
+  const code = ticketCodeSchema.parse(req.params.code);
+  const ticket = await reservationService.getTicketByCode(code);
+  const reservation = await reservationService.getReservationDetail(ticket.reservation_id);
+  const event = {
+    id: reservation.event_id,
+    title: reservation.event_title,
+    venue: reservation.venue,
+    event_date: reservation.event_date,
+  };
+  ok(res, googleWalletService.generateGoogleWalletUrl({ reservation, ticket, event }));
 });

@@ -1,4 +1,5 @@
-import { apiRequest, setTokens } from './client.js';
+import { apiRequest } from './client.js';
+import { setSession, clearSession } from '../auth/auth.js';
 
 export const authApi = {
   login: async credentials => {
@@ -7,7 +8,7 @@ export const authApi = {
       body: credentials,
     });
 
-    setTokens(data);
+    setSession(data);
 
     return data;
   },
@@ -18,7 +19,7 @@ export const authApi = {
       body: data,
     });
 
-    setTokens(result);
+    setSession(result);
 
     return result;
   },
@@ -37,7 +38,7 @@ export const authApi = {
         });
       }
     } finally {
-      setTokens(null);
+      clearSession();
     }
   },
 };

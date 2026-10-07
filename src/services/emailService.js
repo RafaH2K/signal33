@@ -6,6 +6,7 @@ export async function sendPasswordResetEmail(to, resetUrl) {
   const { error } = await resend.emails.send({
     from: env.resend.fromEmail,
     to,
+    replyTo: 'tickets@findyourfrequency.com.mx',
     subject: 'Recuperación de contraseña',
     html: `<p>Solicitaste restablecer tu contraseña.</p><p><a href="${resetUrl}">Haz clic aquí para elegir una nueva</a> (expira en 1 hora).</p><p>Si no fuiste tú, ignora este correo.</p>`,
   });
@@ -35,7 +36,8 @@ function formatEventDate(date) {
 // Los QR van como <img> apuntando al endpoint público del boleto en vez de ir
 // adjuntos: así el correo pesa poco y el mismo enlace sirve si lo reenvían.
 export async function sendReservationEmail({ reservation, tickets }) {
-  const trackUrl = `${env.frontendUrl}/boletos/${reservation.tracking_code}`;
+  const ticketsBase = env.ticketsUrl || env.frontendUrl || 'https://tickets.findyourfrequency.com.mx';
+  const trackUrl = `${ticketsBase.replace(/\/$/, '')}/reserva/${reservation.tracking_code}`;
   const amount = Number(reservation.amount_due ?? 0);
   const amountText = amount > 0 ? `: ${formatMoney(amount)}` : '';
 
@@ -56,6 +58,7 @@ export async function sendReservationEmail({ reservation, tickets }) {
   const { error } = await resend.emails.send({
     from: env.resend.fromEmail,
     to: reservation.email,
+    replyTo: 'tickets@findyourfrequency.com.mx',
     subject: `Tu acceso a ${reservation.event_title}`,
     html: `
       <div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;color:#111">

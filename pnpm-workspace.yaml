@@ -4,6 +4,3 @@ packages:
 
 allowBuilds:
   bcrypt: true
-
-overrides:
-  rolldown: 1.2.9

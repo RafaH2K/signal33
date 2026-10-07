@@ -1,16 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+import { getAccessToken, getRefreshToken, setSession, clearSession } from '../auth/auth.js';
 
-export function setTokens(tokens) {
-  if (!tokens) {
-    localStorage.removeItem('fyf_access_token');
-    localStorage.removeItem('fyf_refresh_token');
-    localStorage.removeItem('fyf_user');
-    return;
-  }
-  if (tokens.accessToken) localStorage.setItem('fyf_access_token', tokens.accessToken);
-  if (tokens.refreshToken) localStorage.setItem('fyf_refresh_token', tokens.refreshToken);
-  if (tokens.user) localStorage.setItem('fyf_user', JSON.stringify(tokens.user));
-}
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 export class ApiError extends Error {
   constructor(message, status) {
@@ -26,9 +16,7 @@ export async function apiRequest(
 ) {
   const headers = {};
 
-  const accessToken = localStorage.getItem(
-    'fyf_access_token'
-  );
+  const accessToken = getAccessToken();
 
   if (!isFormData) {
     headers['Content-Type'] = 'application/json';
@@ -52,7 +40,7 @@ export async function apiRequest(
   const responseBody = await res.json().catch(() => null);
 
   if (res.status === 401 && retry && !path.startsWith('/auth/')) {
-    const refreshToken = localStorage.getItem('fyf_refresh_token');
+    const refreshToken = getRefreshToken();
     if (refreshToken) {
       const refreshed = await fetch(`${API_URL}/auth/refresh`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -60,11 +48,11 @@ export async function apiRequest(
       });
       const tokenData = await refreshed.json().catch(() => null);
       if (refreshed.ok && tokenData?.data?.accessToken) {
-        setTokens(tokenData.data);
+        setSession(tokenData.data);
         return apiRequest(path, { method, body, isFormData, retry: false });
       }
     }
-    setTokens(null);
+    clearSession();
   }
 
   if (!res.ok) {
