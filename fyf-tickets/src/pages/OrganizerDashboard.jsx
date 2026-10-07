@@ -55,15 +55,20 @@ export default function OrganizerDashboard() {
   }, []);
 
   useEffect(() => {
-    if (!organization) {
-      setEvents([]);
-      setReservations([]);
-      return;
+    if (!organization) return;
+
+    async function loadOrganizationData() {
+      try {
+        setLoading(true);
+        await reload(organization.id);
+      } catch (err) {
+        setError(err.message || 'No se pudo cargar el panel.');
+      } finally {
+        setLoading(false);
+      }
     }
-    setLoading(true);
-    reload(organization.id)
-      .catch(err => setError(err.message || 'No se pudo cargar el panel.'))
-      .finally(() => setLoading(false));
+
+    loadOrganizationData();
   }, [organization, reload]);
 
   async function createOrganization(event) {

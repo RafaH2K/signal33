@@ -21,21 +21,22 @@ export default function TicketValidate() {
 
   useEffect(() => {
     if (!code) return;
-    setLoading(true);
-    setError('');
-    setNotice('');
 
-    reservationsApi
-      .getTicket(code)
-      .then(data => {
+    async function loadTicket() {
+      try {
+        setLoading(true);
+        setError('');
+        setNotice('');
+        const data = await reservationsApi.getTicket(code);
         setTicket(data);
-      })
-      .catch(err => {
+      } catch (err) {
         setError(err.message || 'Código de boleto no válido o no encontrado.');
-      })
-      .finally(() => {
+      } finally {
         setLoading(false);
-      });
+      }
+    }
+
+    loadTicket();
   }, [code]);
 
   async function handleMarkPaid() {

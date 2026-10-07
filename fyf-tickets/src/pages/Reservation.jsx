@@ -82,6 +82,13 @@ export default function Reservation() {
             'La cantidad seleccionada ya no está disponible.'
           );
         }
+
+        const maxPerPerson = availabilityData?.maxAccessesPerPerson ?? 1;
+        if (quantity > maxPerPerson) {
+          throw new Error(
+            `Solo puedes reservar hasta ${maxPerPerson} entradas por persona.`
+          );
+        }
       } catch (err) {
         console.error(
           'Error cargando reserva:',

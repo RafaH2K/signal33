@@ -32,11 +32,13 @@ export function setSession({
   accessToken,
   refreshToken,
   user,
-}) {
-  localStorage.setItem(
-    ACCESS_TOKEN_KEY,
-    accessToken
-  );
+} = {}) {
+  if (accessToken) {
+    localStorage.setItem(
+      ACCESS_TOKEN_KEY,
+      accessToken
+    );
+  }
 
   if (refreshToken) {
     localStorage.setItem(

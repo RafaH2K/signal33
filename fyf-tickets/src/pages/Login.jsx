@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { apiRequest } from '../api/client.js';
-import { setSession } from '../auth/auth.js';
+import { authApi } from '../api/auth.js';
 import './login.css';
 
 export default function Login() {
@@ -40,29 +39,16 @@ export default function Login() {
     try {
       setLoading(true);
 
-      const response = await apiRequest('/auth/login', {
-        method: 'POST',
-        body: {
-          email: form.email.trim(),
-          password: form.password,
-        },
+      const response = await authApi.login({
+        email: form.email.trim(),
+        password: form.password,
       });
 
-      const accessToken = response?.accessToken;
-      const refreshToken = response?.refreshToken;
-      const user = response?.user;
-
-      if (!accessToken) {
+      if (!response?.accessToken) {
         throw new Error(
           'El servidor inició sesión, pero no devolvió un token.'
         );
       }
-
-      setSession({
-        accessToken,
-        refreshToken,
-        user,
-      });
 
       navigate(redirectTo, {
         replace: true,
