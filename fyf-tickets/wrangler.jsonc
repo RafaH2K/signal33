@@ -1,0 +1,9 @@
+{
+  // fyf-tickets/wrangler.jsonc
+  "name": "saas33",
+  "compatibility_date": "2026-09-20",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}
